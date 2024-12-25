@@ -16,7 +16,112 @@ interface Exercise {
   name: string;
 }
 
+interface Workout {
+  sets: SingleSet[];
+}
+
+interface SingleSet {
+  exerciseIdentifier: string;
+  durationSeconds: number;
+}
+
 function App() {
+  return (
+    <>
+      <Tabs />
+      <CurrentTab />
+    </>
+  );
+}
+
+function Tabs() {
+  const [currentTab, setCurrentTab] = useCurrentTab();
+
+  return (
+    <nav className="flex space-x-2">
+      <div
+        className={`w-full bg-blue-500 text-white font-bold p-1 text-center cursor-pointer ${
+          currentTab === "workout" ? "bg-blue-300" : "hover:bg-blue-600"
+        }`}
+        onClick={() => setCurrentTab("workout")}
+      >
+        Workout
+      </div>
+      <div
+        className={`w-full bg-blue-500 text-white font-bold p-1 text-center cursor-pointer ${
+          currentTab === "settings" ? "bg-blue-300" : "hover:bg-blue-600"
+        }`}
+        onClick={() => setCurrentTab("settings")}
+      >
+        Settings
+      </div>
+    </nav>
+  );
+}
+
+function CurrentTab() {
+  const [currentTab] = useCurrentTab();
+
+  if (currentTab === "workout") {
+    return <Workout />;
+  }
+
+  if (currentTab === "settings") {
+    return <Settings />;
+  }
+}
+
+function Workout() {
+  const [currentWorkout, setCurrentWorkout] = useCurrentWorkout();
+
+  return (
+    <>
+      <NewWorkout />
+      <WorkoutList />
+    </>
+  );
+}
+
+function NewWorkout() {
+  const [exerciseGroups] = useExerciseGroups();
+  const [_, setCurrentWorkout] = useCurrentWorkout();
+  return (
+    <button
+      onClick={() => setCurrentWorkout(generateWorkout(exerciseGroups))}
+      className="w-full bg-blue-500 text-white font-bold p-1 text-center rounded hover:bg-blue-600"
+    >
+      New Workout
+    </button>
+  );
+}
+
+function WorkoutList() {
+  const [currentWorkout] = useCurrentWorkout();
+
+  return (
+    <ol>
+      {currentWorkout.sets.map((set) => (
+        <li key={set.exerciseIdentifier}>
+          <WorkoutSet set={set} />
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function WorkoutSet({ set }: { set: SingleSet }) {
+  const [exerciseGroups] = useExerciseGroups();
+
+  const exercise = findExercise(exerciseGroups, set.exerciseIdentifier);
+
+  return (
+    <div className="p-2 bg-slate-400 rounded hover:bg-slate-500">
+      {exercise.name}
+    </div>
+  );
+}
+
+function Settings() {
   return (
     <>
       <AddExerciseGroup />
@@ -175,6 +280,65 @@ function useCurrentGroupID() {
   return useLocalStorageState<string | null>("currentGroupID", {
     defaultValue: null,
   });
+}
+
+function useCurrentTab() {
+  return useLocalStorageState<string>("currentTab", {
+    defaultValue: "settings",
+  });
+}
+
+function useCurrentWorkout() {
+  return useLocalStorageState<Workout>("currentWorkout", {
+    defaultValue: { sets: [] },
+  });
+}
+
+function generateWorkout(exerciseGroups: ExerciseGroups) {
+  const workout: Workout = {
+    sets: [],
+  };
+
+  for (const group of exerciseGroups.groups) {
+    for (const exercise of group.exercises) {
+      workout.sets.push({
+        exerciseIdentifier: exercise.identifier,
+        durationSeconds: 30,
+      });
+    }
+  }
+
+  shuffleArray(workout.sets);
+
+  return workout;
+}
+
+function findExercise(exerciseGroups: ExerciseGroups, identifier: string) {
+  for (const group of exerciseGroups.groups) {
+    for (const exercise of group.exercises) {
+      if (exercise.identifier === identifier) {
+        return exercise;
+      }
+    }
+  }
+  throw new Error("Could not find exercise with identifier " + identifier);
+}
+
+function shuffleArray<T>(array: T[]) {
+  let currentIndex = array.length;
+  let randomIndex: number;
+
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex],
+      array[currentIndex],
+    ];
+  }
+
+  return array;
 }
 
 export default App;
