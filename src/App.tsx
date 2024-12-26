@@ -93,6 +93,7 @@ function Workout() {
     <>
       <NewWorkout />
       <PlayPause />
+      <ResetWorkoutButton />
       <WorkoutList />
     </>
   );
@@ -110,6 +111,28 @@ function PlayPause() {
       className="w-full bg-blue-500 text-white font-bold p-1 text-center rounded hover:bg-blue-600"
     >
       {isPlaying ? "Pause" : "Play"}
+    </button>
+  );
+}
+
+function ResetWorkoutButton() {
+  const [currentWorkout, setCurrentWorkout] = useCurrentWorkout();
+  const { setIsPlaying } = useContext(IsPlayingContext);
+
+  function resetWorkout() {
+    for (const set of currentWorkout.sets) {
+      set.currentSecond = 0;
+    }
+    setCurrentWorkout(currentWorkout);
+    setIsPlaying(false);
+  }
+
+  return (
+    <button
+      onClick={resetWorkout}
+      className="w-full bg-blue-500 text-white font-bold p-1 text-center rounded hover:bg-blue-600"
+    >
+      Reset
     </button>
   );
 }
