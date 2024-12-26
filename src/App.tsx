@@ -466,7 +466,7 @@ function generateWorkout(exerciseGroups: ExerciseGroups) {
     2,
     2,
     2,
-    2
+    1
   );
   addWorkoutSetsFromType(
     workout,
