@@ -100,8 +100,8 @@ function WorkoutList() {
 
   return (
     <ol>
-      {currentWorkout.sets.map((set) => (
-        <li key={set.exerciseIdentifier}>
+      {currentWorkout.sets.map((set, i) => (
+        <li key={i}>
           <WorkoutSet set={set} />
         </li>
       ))}
@@ -299,16 +299,20 @@ function generateWorkout(exerciseGroups: ExerciseGroups) {
     sets: [],
   };
 
-  for (const group of exerciseGroups.groups) {
-    for (const exercise of group.exercises) {
-      workout.sets.push({
-        exerciseIdentifier: exercise.identifier,
-        durationSeconds: 30,
-      });
+  let usedGroups = randomChoiceUniqueN(exerciseGroups.groups, 2);
+
+  for (const group of usedGroups) {
+    const usedExercises = randomChoiceUniqueN(group.exercises, 2);
+    for (const exercise of usedExercises) {
+      const setsNum = Math.floor(Math.random() * 3) + 1;
+      for (let i = 0; i < setsNum; i++) {
+        workout.sets.push({
+          exerciseIdentifier: exercise.identifier,
+          durationSeconds: 90,
+        });
+      }
     }
   }
-
-  shuffleArray(workout.sets);
 
   return workout;
 }
@@ -339,6 +343,12 @@ function shuffleArray<T>(array: T[]) {
   }
 
   return array;
+}
+
+function randomChoiceUniqueN<T>(array: T[], n: number) {
+  const arrayCopy = [...array];
+  shuffleArray(arrayCopy);
+  return arrayCopy.slice(0, n);
 }
 
 export default App;
