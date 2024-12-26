@@ -14,6 +14,7 @@ interface ExerciseGroup {
 interface Exercise {
   identifier: string;
   name: string;
+  durationSeconds: number | undefined;
 }
 
 interface Workout {
@@ -22,9 +23,10 @@ interface Workout {
 
 interface SingleSet {
   exercise: Exercise;
-  durationSeconds: number;
   currentSecond: number;
 }
+
+const fallbackDuration = 60;
 
 let isPlaying = false;
 
@@ -146,7 +148,8 @@ function WorkoutList() {
 function WorkoutSet({ set }: { set: SingleSet }) {
   return (
     <div className="p-2 bg-slate-400 rounded hover:bg-slate-500 relative">
-      {set.exercise.name} {set.currentSecond} / {set.durationSeconds}
+      {set.exercise.name} {set.currentSecond} /{" "}
+      {set.exercise.durationSeconds ?? fallbackDuration}
     </div>
   );
 }
@@ -247,8 +250,32 @@ function ExerciseList() {
   return (
     <div>
       {currentGroup.exercises.map((exercise) => (
-        <div key={exercise.name}>{exercise.name}</div>
+        <ExerciseInfo
+          key={exercise.identifier}
+          exerciseIdentifier={exercise.identifier}
+        />
       ))}
+    </div>
+  );
+}
+
+function ExerciseInfo({ exerciseIdentifier }: { exerciseIdentifier: string }) {
+  const [exerciseGroups, setExerciseGroups] = useExerciseGroups();
+  const exercise = findExercise(exerciseGroups, exerciseIdentifier)!;
+
+  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+    exercise.durationSeconds = parseInt(e.target.value);
+    setExerciseGroups(exerciseGroups);
+  }
+
+  return (
+    <div>
+      {exercise.name}
+      <input
+        type="number"
+        value={exercise.durationSeconds ?? ""}
+        onChange={onChange}
+      />
     </div>
   );
 }
@@ -272,6 +299,7 @@ function AddExercise() {
     currentGroup!.exercises.push({
       identifier: getNewIdentifier(),
       name: newExerciseName,
+      durationSeconds: 20,
     });
     setExerciseGroups(exerciseGroups);
     setNewExerciseName("");
@@ -338,7 +366,6 @@ function generateWorkout(exerciseGroups: ExerciseGroups) {
       for (let i = 0; i < setsNum; i++) {
         workout.sets.push({
           exercise: exercise,
-          durationSeconds: 20,
           currentSecond: 0,
         });
       }
@@ -374,19 +401,20 @@ function randomChoiceUniqueN<T>(array: T[], n: number) {
 function addSecondInWorkout(workout: Workout) {
   for (let set_i = 0; set_i < workout.sets.length - 1; set_i++) {
     const set = workout.sets[set_i];
-    if (set.currentSecond < set.durationSeconds) {
+    const duration = set.exercise.durationSeconds ?? fallbackDuration;
+    if (set.currentSecond < duration) {
       set.currentSecond += 1;
 
       if (set_i < workout.sets.length - 1) {
         const nextSet = workout.sets[set_i + 1];
-        if (set.currentSecond === set.durationSeconds - 10) {
+        if (set.currentSecond === duration - 10) {
           say("Next up: " + nextSet.exercise.name);
         }
-        if (set.currentSecond === set.durationSeconds) {
+        if (set.currentSecond === duration) {
           say("Go!");
         }
       } else {
-        if (set.currentSecond === set.durationSeconds) {
+        if (set.currentSecond === duration) {
           say("Done!");
           isPlaying = false;
         }
@@ -399,6 +427,17 @@ function addSecondInWorkout(workout: Workout) {
 function say(text: string) {
   const msg = new SpeechSynthesisUtterance(text);
   window.speechSynthesis.speak(msg);
+}
+
+function findExercise(exerciseGroups: ExerciseGroups, identifier: string) {
+  for (const group of exerciseGroups.groups) {
+    for (const exercise of group.exercises) {
+      if (exercise.identifier === identifier) {
+        return exercise;
+      }
+    }
+  }
+  return null;
 }
 
 export default App;
