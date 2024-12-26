@@ -72,8 +72,6 @@ function CurrentTab() {
 }
 
 function Workout() {
-  const [currentWorkout, setCurrentWorkout] = useCurrentWorkout();
-
   return (
     <>
       <NewWorkout />
