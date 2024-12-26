@@ -302,7 +302,7 @@ function generateWorkout(exerciseGroups: ExerciseGroups) {
   for (const group of usedGroups) {
     const usedExercises = randomChoiceUniqueN(group.exercises, 2);
     for (const exercise of usedExercises) {
-      const setsNum = Math.floor(Math.random() * 3) + 1;
+      const setsNum = Math.floor(Math.random() * 2) + 2;
       for (let i = 0; i < setsNum; i++) {
         workout.sets.push({
           exerciseIdentifier: exercise.identifier,
