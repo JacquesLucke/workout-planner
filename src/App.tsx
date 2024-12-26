@@ -408,14 +408,14 @@ function addSecondInWorkout(workout: Workout) {
       if (set_i < workout.sets.length - 1) {
         const nextSet = workout.sets[set_i + 1];
         if (set.currentSecond === duration - 10) {
-          say("Next up: " + nextSet.exercise.name);
+          say("[pause]Next up: [pause]" + nextSet.exercise.name);
         }
         if (set.currentSecond === duration) {
-          say("Go!");
+          say("GO!");
         }
       } else {
         if (set.currentSecond === duration) {
-          say("Done!");
+          say("DONE!");
           isPlaying = false;
         }
       }
@@ -425,8 +425,11 @@ function addSecondInWorkout(workout: Workout) {
 }
 
 function say(text: string) {
-  const msg = new SpeechSynthesisUtterance(text);
-  window.speechSynthesis.speak(msg);
+  const encodedText = encodeURIComponent(text);
+  const sound = new Audio(
+    `https://speech.jlucke.com/speak?text=${encodedText}&voice=echo`
+  );
+  sound.play();
 }
 
 function findExercise(exerciseGroups: ExerciseGroups, identifier: string) {
