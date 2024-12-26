@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext, createContext } from "react";
 import useLocalStorageState from "use-local-storage-state";
 
 interface ExerciseGroups {
@@ -28,13 +28,25 @@ interface SingleSet {
 
 const fallbackDuration = 60;
 
-let isPlaying = false;
+interface IsPlayingState {
+  isPlaying: boolean;
+  setIsPlaying: (isPlaying: boolean) => void;
+}
+
+const IsPlayingContext = createContext<IsPlayingState>({
+  isPlaying: false,
+  setIsPlaying: () => {},
+});
 
 function App() {
+  const [isPlaying, setIsPlaying] = useState(false);
+
   return (
     <>
-      <Tabs />
-      <CurrentTab />
+      <IsPlayingContext.Provider value={{ isPlaying, setIsPlaying }}>
+        <Tabs />
+        <CurrentTab />
+      </IsPlayingContext.Provider>
     </>
   );
 }
@@ -87,10 +99,9 @@ function Workout() {
 }
 
 function PlayPause() {
-  const [dummyCounter, setDummyCounter] = useState(0);
+  const { isPlaying, setIsPlaying } = useContext(IsPlayingContext);
   function toggleIsPlaying() {
-    isPlaying = !isPlaying;
-    setDummyCounter(dummyCounter + 1);
+    setIsPlaying(!isPlaying);
   }
 
   return (
@@ -106,10 +117,11 @@ function PlayPause() {
 function NewWorkout() {
   const [exerciseGroups] = useExerciseGroups();
   const [_, setCurrentWorkout] = useCurrentWorkout();
+  const { setIsPlaying } = useContext(IsPlayingContext);
 
   function updateWorkout() {
     setCurrentWorkout(generateWorkout(exerciseGroups));
-    isPlaying = false;
+    setIsPlaying(false);
   }
 
   return (
@@ -124,17 +136,18 @@ function NewWorkout() {
 
 function WorkoutList() {
   const [currentWorkout, setCurrentWorkout] = useCurrentWorkout();
+  const { isPlaying } = useContext(IsPlayingContext);
 
-  const [counter, setCounter] = useState(0);
   useEffect(() => {
-    setTimeout(() => {
-      if (isPlaying) {
-        addSecondInWorkout(currentWorkout);
-        setCurrentWorkout(currentWorkout);
-      }
-      setCounter(counter + 1);
+    if (!isPlaying) {
+      return;
+    }
+    let interval = setInterval(() => {
+      addSecondInWorkout(currentWorkout);
+      setCurrentWorkout(currentWorkout);
     }, 1000);
-  }, [counter]);
+    return () => clearInterval(interval);
+  }, [isPlaying]);
 
   return (
     <ol>
