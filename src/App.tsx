@@ -45,12 +45,32 @@ const IsPlayingContext = createContext<IsPlayingState>({
   setIsPlaying: () => {},
 });
 
+let wakeLock: WakeLockSentinel | null = null;
+
 function App() {
   const [isPlaying, setIsPlaying] = useState(false);
 
+  async function setIsPlayingWrap(newState: boolean) {
+    setIsPlaying(newState);
+    try {
+      if (newState) {
+        if (wakeLock === null) {
+          wakeLock = await navigator.wakeLock.request("screen");
+        }
+      } else {
+        if (wakeLock !== null) {
+          wakeLock.release();
+          wakeLock = null;
+        }
+      }
+    } catch {}
+  }
+
   return (
     <>
-      <IsPlayingContext.Provider value={{ isPlaying, setIsPlaying }}>
+      <IsPlayingContext.Provider
+        value={{ isPlaying, setIsPlaying: setIsPlayingWrap }}
+      >
         <Tabs />
         <CurrentTab />
       </IsPlayingContext.Provider>
