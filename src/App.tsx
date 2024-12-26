@@ -5,9 +5,16 @@ interface ExerciseGroups {
   groups: ExerciseGroup[];
 }
 
+enum ExerciseGroupType {
+  Warmup = "warmup",
+  Main = "main",
+  Cooldown = "cooldown",
+}
+
 interface ExerciseGroup {
   identifier: string;
   name: string;
+  type: ExerciseGroupType | undefined;
   exercises: Exercise[];
 }
 
@@ -194,11 +201,11 @@ function WorkoutSet({ set }: { set: SingleSet }) {
         className="absolute h-full bg-green-500 transition-all duration-300"
         style={{ width: `${(set.currentSecond / duration) * 100}%` }}
       >
-        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white font-bold pointer-events-none">
+        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white font-bold whitespace-nowrap">
           {set.exercise.name}
         </span>
       </div>
-      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white pointer-events-none">
+      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white">
         {progressText}
       </span>
     </div>
@@ -210,6 +217,7 @@ function Settings() {
     <>
       <AddExerciseGroup />
       <SelectExerciseGroup />
+      <ExerciseGroupTypeSelect />
       <ExerciseList />
       <AddExercise />
     </>
@@ -227,6 +235,7 @@ function AddExerciseGroup() {
       identifier: newIdentifier,
       name: newGroupName,
       exercises: [],
+      type: ExerciseGroupType.Main,
     });
     setExerciseGroups(exerciseGroups);
     setCurrentGroup(newIdentifier);
@@ -280,6 +289,37 @@ function SelectExerciseGroup() {
           {group.name}
         </option>
       ))}
+    </select>
+  );
+}
+
+function ExerciseGroupTypeSelect() {
+  const [exerciseGroups, setExerciseGroups] = useExerciseGroups();
+  const [currentGroupID, _] = useCurrentGroupID();
+
+  const currentGroup = exerciseGroups.groups.find(
+    (group) => group.identifier === currentGroupID
+  );
+
+  if (!currentGroup) {
+    return null;
+  }
+
+  function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const newType = e.target.value as ExerciseGroupType;
+    currentGroup!.type = newType;
+    setExerciseGroups(exerciseGroups);
+  }
+
+  return (
+    <select
+      value={currentGroup.type}
+      onChange={onChange}
+      className="border border-gray-300 rounded px-3 py-2"
+    >
+      <option value={ExerciseGroupType.Warmup}>Warmup</option>
+      <option value={ExerciseGroupType.Main}>Main</option>
+      <option value={ExerciseGroupType.Cooldown}>Cooldown</option>
     </select>
   );
 }
@@ -410,12 +450,55 @@ function generateWorkout(exerciseGroups: ExerciseGroups) {
     sets: [],
   };
 
-  let usedGroups = randomChoiceUniqueN(exerciseGroups.groups, 2);
+  addWorkoutSetsFromType(
+    workout,
+    ExerciseGroupType.Warmup,
+    exerciseGroups,
+    1,
+    1,
+    1,
+    0
+  );
+  addWorkoutSetsFromType(
+    workout,
+    ExerciseGroupType.Main,
+    exerciseGroups,
+    2,
+    2,
+    2,
+    2
+  );
+  addWorkoutSetsFromType(
+    workout,
+    ExerciseGroupType.Cooldown,
+    exerciseGroups,
+    1,
+    1,
+    1,
+    0
+  );
 
+  return workout;
+}
+
+function addWorkoutSetsFromType(
+  workout: Workout,
+  type: ExerciseGroupType,
+  exerciseGroups: ExerciseGroups,
+  groupsNum: number,
+  exercisesNum: number,
+  minSetsNum: number,
+  variationSetsNum: number
+) {
+  const filteredGroups = exerciseGroups.groups.filter(
+    (group) => group.type === type
+  );
+  const usedGroups = randomChoiceUniqueN(filteredGroups, groupsNum);
   for (const group of usedGroups) {
-    const usedExercises = randomChoiceUniqueN(group.exercises, 2);
+    const usedExercises = randomChoiceUniqueN(group.exercises, exercisesNum);
     for (const exercise of usedExercises) {
-      const setsNum = Math.floor(Math.random() * 2) + 2;
+      const setsNum =
+        Math.floor(Math.random() * (variationSetsNum + 1)) + minSetsNum;
       for (let i = 0; i < setsNum; i++) {
         workout.sets.push({
           exercise: exercise,
@@ -424,8 +507,6 @@ function generateWorkout(exerciseGroups: ExerciseGroups) {
       }
     }
   }
-
-  return workout;
 }
 
 function shuffleArray<T>(array: T[]) {
@@ -456,12 +537,19 @@ function addSecondInWorkout(workout: Workout) {
     const set = workout.sets[set_i];
     const duration = set.exercise.durationSeconds ?? fallbackDuration;
     if (set.currentSecond < duration) {
+      if (set_i === 0 && set.currentSecond === 0) {
+        say(`[pause] Starting with ${set.exercise.name}!`);
+      }
       set.currentSecond += 1;
 
       if (set_i < workout.sets.length - 1) {
         const nextSet = workout.sets[set_i + 1];
         if (set.currentSecond === duration - 10) {
-          say("[pause]Next up: [pause]" + nextSet.exercise.name);
+          if (set.exercise.identifier == nextSet.exercise.identifier) {
+            say("[pause] Next up: [pause] Same exercise!");
+          } else {
+            say(`[pause] Next up: [pause] ${nextSet.exercise.name}!`);
+          }
         }
         if (set.currentSecond === duration) {
           say("GO!");
