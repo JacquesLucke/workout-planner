@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useLocalStorageState from "use-local-storage-state";
 
 interface ExerciseGroups {
@@ -21,9 +21,12 @@ interface Workout {
 }
 
 interface SingleSet {
-  exerciseIdentifier: string;
+  exercise: Exercise;
   durationSeconds: number;
+  currentSecond: number;
 }
+
+let isPlaying = false;
 
 function App() {
   return (
@@ -75,17 +78,41 @@ function Workout() {
   return (
     <>
       <NewWorkout />
+      <PlayPause />
       <WorkoutList />
     </>
+  );
+}
+
+function PlayPause() {
+  const [dummyCounter, setDummyCounter] = useState(0);
+  function toggleIsPlaying() {
+    isPlaying = !isPlaying;
+    setDummyCounter(dummyCounter + 1);
+  }
+
+  return (
+    <button
+      onClick={toggleIsPlaying}
+      className="w-full bg-blue-500 text-white font-bold p-1 text-center rounded hover:bg-blue-600"
+    >
+      {isPlaying ? "Pause" : "Play"}
+    </button>
   );
 }
 
 function NewWorkout() {
   const [exerciseGroups] = useExerciseGroups();
   const [_, setCurrentWorkout] = useCurrentWorkout();
+
+  function updateWorkout() {
+    setCurrentWorkout(generateWorkout(exerciseGroups));
+    isPlaying = false;
+  }
+
   return (
     <button
-      onClick={() => setCurrentWorkout(generateWorkout(exerciseGroups))}
+      onClick={updateWorkout}
       className="w-full bg-blue-500 text-white font-bold p-1 text-center rounded hover:bg-blue-600"
     >
       New Workout
@@ -94,27 +121,32 @@ function NewWorkout() {
 }
 
 function WorkoutList() {
-  const [currentWorkout] = useCurrentWorkout();
+  const [currentWorkout, setCurrentWorkout] = useCurrentWorkout();
+
+  const [counter, setCounter] = useState(0);
+  useEffect(() => {
+    setTimeout(() => {
+      if (isPlaying) {
+        addSecondInWorkout(currentWorkout);
+        setCurrentWorkout(currentWorkout);
+      }
+      setCounter(counter + 1);
+    }, 1000);
+  }, [counter]);
 
   return (
     <ol>
       {currentWorkout.sets.map((set, i) => (
-        <li key={i}>
-          <WorkoutSet set={set} />
-        </li>
+        <li key={i}>{<WorkoutSet set={set} />}</li>
       ))}
     </ol>
   );
 }
 
 function WorkoutSet({ set }: { set: SingleSet }) {
-  const [exerciseGroups] = useExerciseGroups();
-
-  const exercise = findExercise(exerciseGroups, set.exerciseIdentifier);
-
   return (
-    <div className="p-2 bg-slate-400 rounded hover:bg-slate-500">
-      {exercise.name}
+    <div className="p-2 bg-slate-400 rounded hover:bg-slate-500 relative">
+      {set.exercise.name} {set.currentSecond} / {set.durationSeconds}
     </div>
   );
 }
@@ -305,25 +337,15 @@ function generateWorkout(exerciseGroups: ExerciseGroups) {
       const setsNum = Math.floor(Math.random() * 2) + 2;
       for (let i = 0; i < setsNum; i++) {
         workout.sets.push({
-          exerciseIdentifier: exercise.identifier,
-          durationSeconds: 90,
+          exercise: exercise,
+          durationSeconds: 20,
+          currentSecond: 0,
         });
       }
     }
   }
 
   return workout;
-}
-
-function findExercise(exerciseGroups: ExerciseGroups, identifier: string) {
-  for (const group of exerciseGroups.groups) {
-    for (const exercise of group.exercises) {
-      if (exercise.identifier === identifier) {
-        return exercise;
-      }
-    }
-  }
-  throw new Error("Could not find exercise with identifier " + identifier);
 }
 
 function shuffleArray<T>(array: T[]) {
@@ -347,6 +369,36 @@ function randomChoiceUniqueN<T>(array: T[], n: number) {
   const arrayCopy = [...array];
   shuffleArray(arrayCopy);
   return arrayCopy.slice(0, n);
+}
+
+function addSecondInWorkout(workout: Workout) {
+  for (let set_i = 0; set_i < workout.sets.length - 1; set_i++) {
+    const set = workout.sets[set_i];
+    if (set.currentSecond < set.durationSeconds) {
+      set.currentSecond += 1;
+
+      if (set_i < workout.sets.length - 1) {
+        const nextSet = workout.sets[set_i + 1];
+        if (set.currentSecond === set.durationSeconds - 10) {
+          say("Next up: " + nextSet.exercise.name);
+        }
+        if (set.currentSecond === set.durationSeconds) {
+          say("Go!");
+        }
+      } else {
+        if (set.currentSecond === set.durationSeconds) {
+          say("Done!");
+          isPlaying = false;
+        }
+      }
+      return;
+    }
+  }
+}
+
+function say(text: string) {
+  const msg = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(msg);
 }
 
 export default App;
