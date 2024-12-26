@@ -153,19 +153,31 @@ function WorkoutList() {
   }, [isPlaying]);
 
   return (
-    <ol>
+    <div>
       {currentWorkout.sets.map((set, i) => (
-        <li key={i}>{<WorkoutSet set={set} />}</li>
+        <WorkoutSet key={i} set={set} />
       ))}
-    </ol>
+    </div>
   );
 }
 
 function WorkoutSet({ set }: { set: SingleSet }) {
+  const duration = set.exercise.durationSeconds ?? fallbackDuration;
+  const remainingSeconds = duration - set.currentSecond;
+  const progressText = remainingSeconds === 0 ? "Done" : `${remainingSeconds}s`;
   return (
-    <div className="p-2 bg-slate-400 rounded hover:bg-slate-500 relative">
-      {set.exercise.name} {set.currentSecond} /{" "}
-      {set.exercise.durationSeconds ?? fallbackDuration}
+    <div className="w-full h-8 relative">
+      <div
+        className="absolute h-full bg-green-500 transition-all duration-300"
+        style={{ width: `${(set.currentSecond / duration) * 100}%` }}
+      >
+        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white font-bold pointer-events-none">
+          {set.exercise.name}
+        </span>
+      </div>
+      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white pointer-events-none">
+        {progressText}
+      </span>
     </div>
   );
 }
