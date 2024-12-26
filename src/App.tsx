@@ -399,7 +399,7 @@ function randomChoiceUniqueN<T>(array: T[], n: number) {
 }
 
 function addSecondInWorkout(workout: Workout) {
-  for (let set_i = 0; set_i < workout.sets.length - 1; set_i++) {
+  for (let set_i = 0; set_i < workout.sets.length; set_i++) {
     const set = workout.sets[set_i];
     const duration = set.exercise.durationSeconds ?? fallbackDuration;
     if (set.currentSecond < duration) {
