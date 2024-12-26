@@ -136,15 +136,18 @@ function NewWorkout() {
 
 function WorkoutList() {
   const [currentWorkout, setCurrentWorkout] = useCurrentWorkout();
-  const { isPlaying } = useContext(IsPlayingContext);
+  const { isPlaying, setIsPlaying } = useContext(IsPlayingContext);
 
   useEffect(() => {
     if (!isPlaying) {
       return;
     }
     let interval = setInterval(() => {
-      addSecondInWorkout(currentWorkout);
+      const isDone = addSecondInWorkout(currentWorkout);
       setCurrentWorkout(currentWorkout);
+      if (isDone) {
+        setIsPlaying(false);
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, [isPlaying]);
@@ -200,6 +203,7 @@ function AddExerciseGroup() {
       <input
         value={newGroupName}
         onChange={(e) => setNewGroupName(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && addGroup()}
         className="flex-grow border border-gray-300 rounded px-3 py-2"
         placeholder="Group Name"
       />
@@ -323,6 +327,7 @@ function AddExercise() {
       <input
         value={newExerciseName}
         onChange={(e) => setNewExerciseName(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && addExercise()}
         className="flex-grow border border-gray-300 rounded px-3 py-2"
         placeholder="Exercise Name"
       />
@@ -429,12 +434,13 @@ function addSecondInWorkout(workout: Workout) {
       } else {
         if (set.currentSecond === duration) {
           say("DONE!");
-          isPlaying = false;
+          break;
         }
       }
-      return;
+      return false;
     }
   }
+  return true;
 }
 
 function say(text: string) {
