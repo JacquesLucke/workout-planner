@@ -280,6 +280,7 @@ function SettingsTab() {
         />
       ))}
       <AddExerciseGroupButton newGroupNameRef={newGroupNameRef} />
+      {settings.exerciseGroups.length === 0 && <RestoreDefaultsButton />}
     </>
   );
 }
@@ -473,7 +474,10 @@ function ExerciseGroupSection({
             placeholder="Exercise Group Name"
           />
         </div>
-        <div className="text-sky-300 mr-3 cursor-pointer" onClick={removeGroup}>
+        <div
+          className="text-sky-300 mr-3 cursor-pointer select-none"
+          onClick={removeGroup}
+        >
           Remove Group
         </div>
       </div>
@@ -527,6 +531,25 @@ function AddExerciseGroupButton({
   );
 }
 
+function RestoreDefaultsButton() {
+  const [_, setSettings] = useSettings();
+
+  function restoreDefaults() {
+    setSettings(defaultSettings);
+  }
+
+  return (
+    <div className="flex space-x-2">
+      <button
+        onClick={restoreDefaults}
+        className="m-2 cursor-pointer bg-gray-800 py-1 px-2 rounded hover:bg-gray-900 transition duration-300 text-sky-50 select-none"
+      >
+        Restore Defaults
+      </button>
+    </div>
+  );
+}
+
 function ExerciseInfoRow({
   group,
   exercise,
@@ -570,7 +593,7 @@ function ExerciseInfoRow({
         placeholder="Exercise Name"
       />
       <div
-        className="p-1 hover:underline cursor-pointer text-sky-300 mr-2"
+        className="p-1 hover:underline cursor-pointer text-sky-300 mr-2 select-none"
         onClick={removeExercise}
       >
         Remove
