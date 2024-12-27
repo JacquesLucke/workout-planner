@@ -132,7 +132,12 @@ function StartPauseButton() {
   const [workout] = useCurrentWorkout();
   const { isPlaying, setIsPlaying } = useContext(IsPlayingContext);
   const has_began = workoutHasBegan(workout);
+  const has_ended = workoutHasEnded(workout);
+
   function toggleIsPlaying() {
+    if (has_ended) {
+      return;
+    }
     setIsPlaying(!isPlaying);
   }
 
@@ -141,7 +146,13 @@ function StartPauseButton() {
       onClick={toggleIsPlaying}
       className="cursor-pointer bg-gray-800 py-2 w-full mx-2 rounded hover:bg-gray-900 transition duration-300 text-center"
     >
-      {isPlaying ? "Pause" : has_began ? "Continue" : "Start"}
+      {isPlaying
+        ? "Pause"
+        : has_began
+        ? has_ended
+          ? "Done"
+          : "Continue"
+        : "Start"}
     </div>
   );
 }
@@ -534,6 +545,15 @@ function workoutHasBegan(workout: Workout) {
     }
   }
   return false;
+}
+
+function workoutHasEnded(workout: Workout) {
+  for (const task of workout.tasks) {
+    if (task.currentSecond < task.duration) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function addSecondInWorkout(workout: Workout) {
