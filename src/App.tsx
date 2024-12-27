@@ -83,7 +83,7 @@ function Tabs() {
       {tabNames.map((name, i) => (
         <div
           key={name}
-          className={`flex justify-center items-center shadow-md px-4 py-2 mx-4 rounded bg-gray-800 hover:bg-gray-900 transition duration-300 cursor-pointer text-sky-50 border-green-700 ${
+          className={`flex justify-center items-center shadow-md px-4 py-2 mx-4 rounded bg-gray-800 hover:bg-gray-900 transition duration-300 cursor-pointer select-none text-sky-50 border-green-700 ${
             tabIdentifiers[i] === currentTab ? "border-y-2" : ""
           }`}
           onClick={() => setCurrentTab(tabIdentifiers[i])}
@@ -144,7 +144,7 @@ function StartPauseButton() {
   return (
     <div
       onClick={toggleIsPlaying}
-      className="cursor-pointer bg-gray-800 py-2 w-full mx-2 rounded hover:bg-gray-900 transition duration-300 text-center"
+      className="cursor-pointer bg-gray-800 py-2 w-full mx-2 rounded hover:bg-gray-900 transition duration-300 text-center select-none"
     >
       {isPlaying
         ? "Pause"
@@ -172,7 +172,7 @@ function ResetWorkoutButton() {
   return (
     <div
       onClick={resetWorkout}
-      className="cursor-pointer bg-gray-800 py-2 px-4 rounded hover:bg-gray-900 transition duration-300"
+      className="cursor-pointer bg-gray-800 py-2 px-4 rounded hover:bg-gray-900 transition duration-300 select-none"
     >
       Reset
     </div>
@@ -192,7 +192,7 @@ function NewWorkoutButton() {
   return (
     <div
       onClick={updateWorkout}
-      className="cursor-pointer bg-gray-800 py-2 px-4 rounded hover:bg-gray-900 transition duration-300"
+      className="cursor-pointer bg-gray-800 py-2 px-4 rounded hover:bg-gray-900 transition duration-300 select-none"
     >
       New
     </div>
@@ -462,7 +462,7 @@ function AddExerciseButton({ group }: { group: ExerciseGroup }) {
     <div className="px-4 mt-2">
       <button
         onClick={addExercise}
-        className="cursor-pointer bg-gray-800 py-1 px-2 rounded hover:bg-gray-900 transition duration-300 text-sky-50"
+        className="cursor-pointer bg-gray-800 py-1 px-2 rounded hover:bg-gray-900 transition duration-300 text-sky-50  select-none"
       >
         Add exercise
       </button>
@@ -502,14 +502,35 @@ function generateWorkout(settings: Settings) {
     tasks: [],
   };
 
-  for (const group of settings.exerciseGroups) {
-    for (const exercise of group.exercises) {
-      workout.tasks.push({
-        name: exercise.name,
-        duration: settings.defaultTaskDuration,
-        currentSecond: 0,
-      });
+  if (settings.warmupDuration > 0) {
+    workout.tasks.push({
+      name: "Warmup",
+      duration: settings.warmupDuration,
+      currentSecond: 0,
+    });
+  }
+
+  const groups = randomChoiceUniqueN(settings.exerciseGroups, 2);
+  for (const group of groups) {
+    const exercises = randomChoiceUniqueN(group.exercises, 2);
+    for (const exercise of exercises) {
+      const setsNum = Math.floor(Math.random() * 2) + 2;
+      for (let i = 0; i < setsNum; i++) {
+        workout.tasks.push({
+          name: exercise.name,
+          duration: settings.defaultTaskDuration,
+          currentSecond: 0,
+        });
+      }
     }
+  }
+
+  if (settings.cooldownDuration > 0) {
+    workout.tasks.push({
+      name: "Cooldown",
+      duration: settings.cooldownDuration,
+      currentSecond: 0,
+    });
   }
 
   return workout;
