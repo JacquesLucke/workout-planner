@@ -82,6 +82,7 @@ function Tabs() {
     <nav className="flex justify-center items-center p-2 shadow-md shadow-gray-800 bg-sky-900 mb-2">
       {tabNames.map((name, i) => (
         <div
+          key={name}
           className={`flex justify-center items-center shadow-md px-4 py-2 mx-4 rounded bg-gray-800 hover:bg-gray-900 transition duration-300 cursor-pointer text-sky-50 border-green-700 ${
             tabIdentifiers[i] === currentTab ? "border-y-2" : ""
           }`}
@@ -239,12 +240,8 @@ function SettingsTab() {
   return (
     <>
       <GlobalTimeSettingsBox />
-      <GroupSeparator />
       {settings.exerciseGroups.map((group) => (
-        <>
-          <ExerciseGroupSection key={group.identifier} group={group} />
-          <GroupSeparator />
-        </>
+        <ExerciseGroupSection key={group.identifier} group={group} />
       ))}
       <ExerciseGroupAdder />
     </>
@@ -259,10 +256,6 @@ function GlobalTimeSettingsBox() {
       <CooldownDurationInput />
     </div>
   );
-}
-
-function GroupSeparator() {
-  return <div className="border-b border-gray-300 my-2" />;
 }
 
 function WarmupDurationInput() {
@@ -340,18 +333,19 @@ function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
   }
 
   return (
-    <>
+    <div className="bg-sky-900 my-2 pb-2">
       <div className="font-bold">
         <input
           value={group.name}
           onChange={(e) => renameGroup(e.target.value)}
+          className="bg-transparent p-2 text-sky-50"
         />
       </div>
       {group.exercises.map((exercise) => (
         <ExerciseInfoRow key={exercise.identifier} exercise={exercise} />
       ))}
-      <ExerciseAdder settings={settings} group={group} />
-    </>
+      <AddExerciseButton group={group} />
+    </div>
   );
 }
 
@@ -406,43 +400,31 @@ function ExerciseInfoRow({ exercise }: { exercise: Exercise }) {
       <input
         value={exercise.name}
         onChange={(e) => renameExercise(e.target.value)}
+        className="bg-transparent pl-4 py-1 text-sky-50"
       />
     </div>
   );
 }
 
-function ExerciseAdder({
-  settings,
-  group,
-}: {
-  settings: Settings;
-  group: ExerciseGroup;
-}) {
-  const [newExerciseName, setNewExerciseName] = useState("");
-  const [_, setSettings] = useSettings();
+function AddExerciseButton({ group }: { group: ExerciseGroup }) {
+  const [settings, setSettings] = useSettings();
 
   function addExercise() {
-    group.exercises.push({
+    const foundGroup = settings.exerciseGroups.find(
+      (g) => g.identifier === group.identifier
+    )!;
+    foundGroup.exercises.push({
       identifier: getNewIdentifier(),
-      name: newExerciseName,
+      name: "New",
     });
     setSettings(settings);
-    setNewExerciseName("");
   }
 
   return (
-    <div className="flex space-x-2">
-      <input
-        value={newExerciseName}
-        onChange={(e) => setNewExerciseName(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && addExercise()}
-        className="flex-grow border border-gray-300 rounded px-3 py-2"
-        placeholder="Exercise Name"
-      />
+    <div className="px-4 mt-2">
       <button
         onClick={addExercise}
-        className="w-12 bg-blue-500 text-white font-bold rounded hover:bg-blue-600"
-        disabled={!newExerciseName}
+        className="w-12 bg-blue-500 hover:bg-blue-600 transition duration-300 text-white font-bold rounded"
       >
         +
       </button>
