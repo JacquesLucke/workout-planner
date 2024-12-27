@@ -424,7 +424,7 @@ function ExerciseInfoRow({
         className="bg-transparent pl-4 py-1 text-sky-50"
       />
       <div
-        className="p-1 hover:underline cursor-pointer text-sky-50"
+        className="p-1 hover:underline cursor-pointer text-sky-50 mr-2"
         onClick={removeExercise}
       >
         Remove
