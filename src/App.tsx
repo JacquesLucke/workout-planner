@@ -8,6 +8,9 @@ interface Settings {
   warmupDuration: number;
   cooldownDuration: number;
   defaultTaskDuration: number;
+  groupsPerWorkout: number;
+  minSetsPerGroup: number;
+  maxSetsPerGroup: number;
 }
 
 interface ExerciseGroup {
@@ -287,6 +290,8 @@ function GlobalTimeSettingsBox() {
       <WarmupDurationInput />
       <DefaultTaskDurationInput />
       <CooldownDurationInput />
+      <GroupsPerWorkoutInput />
+      <SetsPerGroupRangeInput />
     </div>
   );
 }
@@ -305,12 +310,12 @@ function WarmupDurationInput() {
 
   return (
     <div className="flex m-2 items-center">
-      <label className="w-1/3">Warmup:</label>
+      <label className="w-44">Warmup:</label>
       <input
         type="number"
         value={settings.warmupDuration}
         onChange={(e) => updateWarmupDuration(parseInt(e.target.value))}
-        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none"
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
       />
     </div>
   );
@@ -329,12 +334,12 @@ function DefaultTaskDurationInput() {
 
   return (
     <div className="flex m-2 items-center">
-      <label className="w-1/3">Set:</label>
+      <label className="w-44">Set:</label>
       <input
         type="number"
         value={settings.defaultTaskDuration}
         onChange={(e) => updateDefaultTaskDuration(parseInt(e.target.value))}
-        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none"
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
       />
     </div>
   );
@@ -353,12 +358,76 @@ function CooldownDurationInput() {
 
   return (
     <div className="flex m-2 items-center">
-      <label className="w-1/3">Cooldown:</label>
+      <label className="w-44">Cooldown:</label>
       <input
         type="number"
         value={settings.cooldownDuration}
         onChange={(e) => updateCooldownDuration(parseInt(e.target.value))}
-        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none"
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
+      />
+    </div>
+  );
+}
+
+function GroupsPerWorkoutInput() {
+  const [settings, setSettings] = useSettings();
+
+  function updateGroupsPerWorkout(num: number) {
+    if (isNaN(num)) {
+      num = 0;
+    }
+    settings.groupsPerWorkout = num;
+    setSettings(settings);
+  }
+
+  return (
+    <div className="flex m-2 items-center">
+      <label className="w-44">Groups per Workout:</label>
+      <input
+        type="number"
+        value={settings.groupsPerWorkout}
+        onChange={(e) => updateGroupsPerWorkout(parseInt(e.target.value))}
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
+      />
+    </div>
+  );
+}
+
+function SetsPerGroupRangeInput() {
+  const [settings, setSettings] = useSettings();
+
+  function updateMinSetsPerGroup(newMin: number) {
+    if (isNaN(newMin)) {
+      newMin = 0;
+    }
+    settings.minSetsPerGroup = newMin;
+    setSettings(settings);
+  }
+
+  function updateMaxSetsPerGroup(newMax: number) {
+    if (isNaN(newMax)) {
+      newMax = 0;
+    }
+    settings.maxSetsPerGroup = newMax;
+    setSettings(settings);
+  }
+
+  return (
+    <div className="flex m-2 items-center">
+      <label className="w-44">Sets per Group:</label>
+      <input
+        type="number"
+        value={settings.minSetsPerGroup}
+        onChange={(e) => updateMinSetsPerGroup(parseInt(e.target.value))}
+        min={1}
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none mr-2 min-w-8"
+      />
+      <input
+        type="number"
+        value={settings.maxSetsPerGroup}
+        onChange={(e) => updateMaxSetsPerGroup(parseInt(e.target.value))}
+        min={1}
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
       />
     </div>
   );
@@ -580,12 +649,33 @@ function generateWorkout(settings: Settings) {
     });
   }
 
-  const groups = randomChoiceUniqueN(settings.exerciseGroups, 2);
+  const groups = randomChoiceUniqueN(
+    settings.exerciseGroups,
+    settings.groupsPerWorkout
+  );
   for (const group of groups) {
-    const exercises = randomChoiceUniqueN(group.exercises, 2);
-    for (const exercise of exercises) {
-      const setsNum = Math.floor(Math.random() * 2) + 2;
-      for (let i = 0; i < setsNum; i++) {
+    const setsInGroup =
+      Math.floor(
+        Math.random() *
+          (settings.maxSetsPerGroup - settings.minSetsPerGroup + 1)
+      ) + settings.minSetsPerGroup;
+    const setDistribution = getWorkoutGroupSetDistribution(setsInGroup);
+    let exercisesToUse;
+    if (setDistribution.length <= group.exercises.length) {
+      exercisesToUse = randomChoiceUniqueN(
+        group.exercises,
+        setDistribution.length
+      );
+    } else {
+      exercisesToUse = [...group.exercises];
+      shuffleArray(exercisesToUse);
+      exercisesToUse = repeatToLength(exercisesToUse, setDistribution.length);
+    }
+
+    for (let i = 0; i < setDistribution.length; i++) {
+      const exercise = exercisesToUse[i];
+      const setsNum = setDistribution[i];
+      for (let j = 0; j < setsNum; j++) {
         workout.tasks.push({
           name: exercise.name,
           duration: settings.defaultTaskDuration,
@@ -606,6 +696,24 @@ function generateWorkout(settings: Settings) {
   return workout;
 }
 
+function getWorkoutGroupSetDistribution(setsNum: number) {
+  if (setsNum <= 3) {
+    return [setsNum];
+  }
+  while (true) {
+    let count = 0;
+    let result = [];
+    while (count < setsNum) {
+      const nextNum = randomChoice([2, 3]);
+      result.push(nextNum);
+      count += nextNum;
+    }
+    if (count === setsNum) {
+      return result;
+    }
+  }
+}
+
 function shuffleArray<T>(array: T[]) {
   let currentIndex = array.length;
   let randomIndex: number;
@@ -623,10 +731,22 @@ function shuffleArray<T>(array: T[]) {
   return array;
 }
 
+function repeatToLength<T>(array: T[], length: number) {
+  const result: T[] = [];
+  for (let i = 0; i < length; i++) {
+    result.push(array[i % array.length]);
+  }
+  return result;
+}
+
 function randomChoiceUniqueN<T>(array: T[], n: number) {
   const arrayCopy = [...array];
   shuffleArray(arrayCopy);
   return arrayCopy.slice(0, n);
+}
+
+function randomChoice<T>(array: T[]) {
+  return array[Math.floor(Math.random() * array.length)];
 }
 
 function workoutHasBegan(workout: Workout) {

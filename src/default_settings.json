@@ -60,5 +60,8 @@
   ],
   "warmupDuration": 60,
   "cooldownDuration": 120,
-  "defaultTaskDuration": 100
+  "defaultTaskDuration": 100,
+  "minSetsPerGroup": 4,
+  "maxSetsPerGroup": 7,
+  "groupsPerWorkout": 2
 }
