@@ -525,9 +525,10 @@ function addSecondInWorkout(workout: Workout) {
       }
       task.currentSecond += 1;
 
+      const nextUpTime = Math.max(5, Math.ceil(task.duration * 0.25));
       if (task_i < workout.tasks.length - 1) {
         const nextTask = workout.tasks[task_i + 1];
-        if (task.currentSecond === task.duration - 10) {
+        if (task.currentSecond === task.duration - nextUpTime) {
           if (task.name == nextTask.name) {
             say("[pause] Next up: [pause] Same exercise!");
           } else {
@@ -541,6 +542,11 @@ function addSecondInWorkout(workout: Workout) {
         if (task.currentSecond === task.duration) {
           say("DONE!");
           break;
+        }
+      }
+      if (nextUpTime >= 10) {
+        if (task.currentSecond === task.duration - 5) {
+          say("[pause] 5 seconds to go!");
         }
       }
       return false;
