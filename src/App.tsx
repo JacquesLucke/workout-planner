@@ -418,14 +418,14 @@ function SettingsRangeInput({
       <label className="w-44">{label}:</label>
       <input
         type="number"
-        value={settings.minSetsPerGroup}
+        value={oldMin}
         onChange={(e) => updateMin(parseInt(e.target.value))}
         min={1}
         className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none mr-2 min-w-8"
       />
       <input
         type="number"
-        value={settings.maxSetsPerGroup}
+        value={oldMax}
         onChange={(e) => updateMax(parseInt(e.target.value))}
         min={1}
         className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
