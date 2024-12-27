@@ -144,7 +144,11 @@ function StartPauseButton() {
   return (
     <div
       onClick={toggleIsPlaying}
-      className="cursor-pointer bg-gray-800 py-2 w-full mx-2 rounded hover:bg-gray-900 transition duration-300 text-center select-none"
+      className={`py-2 w-full mx-2 rounded transition duration-300 text-center select-none ${
+        has_ended
+          ? "bg-gray-600"
+          : "bg-gray-800 hover:bg-gray-900 cursor-pointer"
+      }`}
     >
       {isPlaying
         ? "Pause"
