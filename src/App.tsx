@@ -252,13 +252,23 @@ function WorkoutTaskRow({ task }: { task: WorkoutTask }) {
 
 function SettingsTab() {
   const [settings, _] = useSettings();
+  const newGroupNameRef = useRef<HTMLInputElement>(null);
+
   return (
     <>
       <GlobalTimeSettingsBox />
-      {settings.exerciseGroups.map((group) => (
-        <ExerciseGroupSection key={group.identifier} group={group} />
+      {settings.exerciseGroups.map((group, i) => (
+        <ExerciseGroupSection
+          key={group.identifier}
+          group={group}
+          groupNameRef={
+            i === settings.exerciseGroups.length - 1
+              ? newGroupNameRef
+              : undefined
+          }
+        />
       ))}
-      <AddExerciseGroupButton />
+      <AddExerciseGroupButton newGroupNameRef={newGroupNameRef} />
     </>
   );
 }
@@ -336,7 +346,13 @@ function CooldownDurationInput() {
   );
 }
 
-function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
+function ExerciseGroupSection({
+  group,
+  groupNameRef,
+}: {
+  group: ExerciseGroup;
+  groupNameRef: React.RefObject<HTMLInputElement | null> | undefined;
+}) {
   const [settings, setSettings] = useSettings();
   const newExerciseNameRef = useRef<HTMLInputElement>(null);
 
@@ -363,6 +379,8 @@ function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
             value={group.name}
             onChange={(e) => renameGroup(e.target.value)}
             className="bg-transparent p-2 text-sky-50"
+            ref={groupNameRef}
+            placeholder="Exercise Group Name"
           />
         </div>
         <div className="text-sky-300 mr-3 cursor-pointer" onClick={removeGroup}>
@@ -387,17 +405,24 @@ function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
   );
 }
 
-function AddExerciseGroupButton() {
+function AddExerciseGroupButton({
+  newGroupNameRef,
+}: {
+  newGroupNameRef: React.RefObject<HTMLInputElement | null> | undefined;
+}) {
   const [settings, setSettings] = useSettings();
 
   function addGroup() {
     const newIdentifier = getNewIdentifier();
     settings.exerciseGroups.push({
       identifier: newIdentifier,
-      name: "New",
+      name: "",
       exercises: [],
     });
     setSettings(settings);
+    setTimeout(() => {
+      newGroupNameRef?.current?.focus();
+    }, 0);
   }
 
   return (
