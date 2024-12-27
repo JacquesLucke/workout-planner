@@ -1,39 +1,37 @@
 import { useState, useEffect, useContext, createContext } from "react";
 import useLocalStorageState from "use-local-storage-state";
 
-interface ExerciseGroups {
-  groups: ExerciseGroup[];
+interface Settings {
+  exerciseGroups: ExerciseGroup[];
+  warmupDuration: number;
+  cooldownDuration: number;
+  defaultTaskDuration: number;
 }
 
-enum ExerciseGroupType {
-  Warmup = "warmup",
-  Main = "main",
-  Cooldown = "cooldown",
+interface ExerciseGroups {
+  groups: ExerciseGroup[];
 }
 
 interface ExerciseGroup {
   identifier: string;
   name: string;
-  type: ExerciseGroupType | undefined;
   exercises: Exercise[];
 }
 
 interface Exercise {
   identifier: string;
   name: string;
-  durationSeconds: number | undefined;
 }
 
 interface Workout {
-  sets: SingleSet[];
+  tasks: WorkoutTask[];
 }
 
-interface SingleSet {
-  exercise: Exercise;
+interface WorkoutTask {
+  name: string;
+  duration: number;
   currentSecond: number;
 }
-
-const fallbackDuration = 60;
 
 interface IsPlayingState {
   isPlaying: boolean;
@@ -107,15 +105,15 @@ function CurrentTab() {
   const [currentTab] = useCurrentTab();
 
   if (currentTab === "workout") {
-    return <Workout />;
+    return <WorkoutTab />;
   }
 
   if (currentTab === "settings") {
-    return <Settings />;
+    return <SettingsTab />;
   }
 }
 
-function Workout() {
+function WorkoutTab() {
   return (
     <>
       <NewWorkout />
@@ -147,8 +145,8 @@ function ResetWorkoutButton() {
   const { setIsPlaying } = useContext(IsPlayingContext);
 
   function resetWorkout() {
-    for (const set of currentWorkout.sets) {
-      set.currentSecond = 0;
+    for (const task of currentWorkout.tasks) {
+      task.currentSecond = 0;
     }
     setCurrentWorkout(currentWorkout);
     setIsPlaying(false);
@@ -165,12 +163,12 @@ function ResetWorkoutButton() {
 }
 
 function NewWorkout() {
-  const [exerciseGroups] = useExerciseGroups();
+  const [settings] = useSettings();
   const [_, setCurrentWorkout] = useCurrentWorkout();
   const { setIsPlaying } = useContext(IsPlayingContext);
 
   function updateWorkout() {
-    setCurrentWorkout(generateWorkout(exerciseGroups));
+    setCurrentWorkout(generateWorkout(settings));
     setIsPlaying(false);
   }
 
@@ -204,25 +202,24 @@ function WorkoutList() {
 
   return (
     <div>
-      {currentWorkout.sets.map((set, i) => (
-        <WorkoutSet key={i} set={set} />
+      {currentWorkout.tasks.map((task, i) => (
+        <WorkoutTaskRow key={i} task={task} />
       ))}
     </div>
   );
 }
 
-function WorkoutSet({ set }: { set: SingleSet }) {
-  const duration = set.exercise.durationSeconds ?? fallbackDuration;
-  const remainingSeconds = duration - set.currentSecond;
+function WorkoutTaskRow({ task }: { task: WorkoutTask }) {
+  const remainingSeconds = task.duration - task.currentSecond;
   const progressText = remainingSeconds === 0 ? "Done" : `${remainingSeconds}s`;
   return (
     <div className="w-full h-8 relative">
       <div
         className="absolute h-full bg-green-500 transition-all duration-300"
-        style={{ width: `${(set.currentSecond / duration) * 100}%` }}
+        style={{ width: `${(task.currentSecond / task.duration) * 100}%` }}
       >
         <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white font-bold whitespace-nowrap">
-          {set.exercise.name}
+          {task.name}
         </span>
       </div>
       <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white">
@@ -232,32 +229,30 @@ function WorkoutSet({ set }: { set: SingleSet }) {
   );
 }
 
-function Settings() {
+function SettingsTab() {
   return (
     <>
-      <AddExerciseGroup />
-      <SelectExerciseGroup />
-      <ExerciseGroupTypeSelect />
+      <ExerciseGroupAdder />
+      <ExerciseGroupSelector />
       <ExerciseList />
       <AddExercise />
     </>
   );
 }
 
-function AddExerciseGroup() {
-  const [exerciseGroups, setExerciseGroups] = useExerciseGroups();
+function ExerciseGroupAdder() {
+  const [settings, setSettings] = useSettings();
   const [_, setCurrentGroup] = useCurrentGroupID();
   const [newGroupName, setNewGroupName] = useState("");
 
   function addGroup() {
     const newIdentifier = getNewIdentifier();
-    exerciseGroups.groups.push({
+    settings.exerciseGroups.push({
       identifier: newIdentifier,
       name: newGroupName,
       exercises: [],
-      type: ExerciseGroupType.Main,
     });
-    setExerciseGroups(exerciseGroups);
+    setSettings(settings);
     setCurrentGroup(newIdentifier);
     setNewGroupName("");
   }
@@ -282,11 +277,11 @@ function AddExerciseGroup() {
   );
 }
 
-function SelectExerciseGroup() {
-  const [exerciseGroups, _] = useExerciseGroups();
+function ExerciseGroupSelector() {
+  const [settings] = useSettings();
   const [currentGroupID, setCurrentGroup] = useCurrentGroupID();
 
-  const currentGroup = exerciseGroups.groups.find(
+  const currentGroup = settings.exerciseGroups.find(
     (group) => group.identifier === currentGroupID
   );
 
@@ -304,7 +299,7 @@ function SelectExerciseGroup() {
       onChange={onChange}
       className="border border-gray-300 rounded px-3 py-2"
     >
-      {exerciseGroups.groups.map((group) => (
+      {settings.exerciseGroups.map((group) => (
         <option key={group.identifier} value={group.identifier}>
           {group.name}
         </option>
@@ -313,46 +308,15 @@ function SelectExerciseGroup() {
   );
 }
 
-function ExerciseGroupTypeSelect() {
-  const [exerciseGroups, setExerciseGroups] = useExerciseGroups();
-  const [currentGroupID, _] = useCurrentGroupID();
-
-  const currentGroup = exerciseGroups.groups.find(
-    (group) => group.identifier === currentGroupID
-  );
-
-  if (!currentGroup) {
-    return null;
-  }
-
-  function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const newType = e.target.value as ExerciseGroupType;
-    currentGroup!.type = newType;
-    setExerciseGroups(exerciseGroups);
-  }
-
-  return (
-    <select
-      value={currentGroup.type}
-      onChange={onChange}
-      className="border border-gray-300 rounded px-3 py-2"
-    >
-      <option value={ExerciseGroupType.Warmup}>Warmup</option>
-      <option value={ExerciseGroupType.Main}>Main</option>
-      <option value={ExerciseGroupType.Cooldown}>Cooldown</option>
-    </select>
-  );
-}
-
 function ExerciseList() {
-  const [exerciseGroups] = useExerciseGroups();
+  const [settings] = useSettings();
   const [currentGroupID] = useCurrentGroupID();
 
   if (!currentGroupID) {
     return null;
   }
 
-  const currentGroup = exerciseGroups.groups.find(
+  const currentGroup = settings.exerciseGroups.find(
     (group) => group.identifier === currentGroupID
   );
   if (!currentGroup) {
@@ -362,45 +326,25 @@ function ExerciseList() {
   return (
     <div>
       {currentGroup.exercises.map((exercise) => (
-        <ExerciseInfo
-          key={exercise.identifier}
-          exerciseIdentifier={exercise.identifier}
-        />
+        <ExerciseInfoRow key={exercise.identifier} exercise={exercise} />
       ))}
     </div>
   );
 }
 
-function ExerciseInfo({ exerciseIdentifier }: { exerciseIdentifier: string }) {
-  const [exerciseGroups, setExerciseGroups] = useExerciseGroups();
-  const exercise = findExercise(exerciseGroups, exerciseIdentifier)!;
-
-  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    exercise.durationSeconds = parseInt(e.target.value);
-    setExerciseGroups(exerciseGroups);
-  }
-
-  return (
-    <div>
-      {exercise.name}
-      <input
-        type="number"
-        value={exercise.durationSeconds ?? ""}
-        onChange={onChange}
-      />
-    </div>
-  );
+function ExerciseInfoRow({ exercise }: { exercise: Exercise }) {
+  return <div>{exercise.name}</div>;
 }
 
 function AddExercise() {
-  const [exerciseGroups, setExerciseGroups] = useExerciseGroups();
+  const [settings, setSettings] = useSettings();
   const [currentGroupID, _] = useCurrentGroupID();
   const [newExerciseName, setNewExerciseName] = useState("");
 
   if (!currentGroupID) {
     return null;
   }
-  const currentGroup = exerciseGroups.groups.find(
+  const currentGroup = settings.exerciseGroups.find(
     (group) => group.identifier === currentGroupID
   );
   if (!currentGroup) {
@@ -411,9 +355,8 @@ function AddExercise() {
     currentGroup!.exercises.push({
       identifier: getNewIdentifier(),
       name: newExerciseName,
-      durationSeconds: 20,
     });
-    setExerciseGroups(exerciseGroups);
+    setSettings(settings);
     setNewExerciseName("");
   }
 
@@ -441,9 +384,14 @@ function getNewIdentifier() {
   return Math.random().toString().substring(2);
 }
 
-function useExerciseGroups() {
-  return useLocalStorageState<ExerciseGroups>("exercises", {
-    defaultValue: { groups: [] },
+function useSettings() {
+  return useLocalStorageState<Settings>("settings", {
+    defaultValue: {
+      exerciseGroups: [],
+      warmupDuration: 60,
+      cooldownDuration: 60,
+      defaultTaskDuration: 60,
+    },
   });
 }
 
@@ -461,72 +409,26 @@ function useCurrentTab() {
 
 function useCurrentWorkout() {
   return useLocalStorageState<Workout>("currentWorkout", {
-    defaultValue: { sets: [] },
+    defaultValue: { tasks: [] },
   });
 }
 
-function generateWorkout(exerciseGroups: ExerciseGroups) {
+function generateWorkout(settings: Settings) {
   const workout: Workout = {
-    sets: [],
+    tasks: [],
   };
 
-  addWorkoutSetsFromType(
-    workout,
-    ExerciseGroupType.Warmup,
-    exerciseGroups,
-    1,
-    1,
-    1,
-    0
-  );
-  addWorkoutSetsFromType(
-    workout,
-    ExerciseGroupType.Main,
-    exerciseGroups,
-    2,
-    2,
-    2,
-    1
-  );
-  addWorkoutSetsFromType(
-    workout,
-    ExerciseGroupType.Cooldown,
-    exerciseGroups,
-    1,
-    1,
-    1,
-    0
-  );
-
-  return workout;
-}
-
-function addWorkoutSetsFromType(
-  workout: Workout,
-  type: ExerciseGroupType,
-  exerciseGroups: ExerciseGroups,
-  groupsNum: number,
-  exercisesNum: number,
-  minSetsNum: number,
-  variationSetsNum: number
-) {
-  const filteredGroups = exerciseGroups.groups.filter(
-    (group) => group.type === type
-  );
-  const usedGroups = randomChoiceUniqueN(filteredGroups, groupsNum);
-  for (const group of usedGroups) {
-    const usedExercises = randomChoiceUniqueN(group.exercises, exercisesNum);
-    for (const exercise of usedExercises) {
-      const setsNum =
-        Math.floor(Math.random() * (variationSetsNum + 1)) + minSetsNum;
-      for (let i = 0; i < setsNum; i++) {
-        workout.sets.push({
-          exercise: exercise,
-          currentSecond: 0,
-        });
-      }
+  for (const group of settings.exerciseGroups) {
+    for (const exercise of group.exercises) {
+      workout.tasks.push({
+        name: exercise.name,
+        duration: settings.defaultTaskDuration,
+        currentSecond: 0,
+      });
     }
   }
+
+  return workout;
 }
 
 function shuffleArray<T>(array: T[]) {
@@ -553,29 +455,28 @@ function randomChoiceUniqueN<T>(array: T[], n: number) {
 }
 
 function addSecondInWorkout(workout: Workout) {
-  for (let set_i = 0; set_i < workout.sets.length; set_i++) {
-    const set = workout.sets[set_i];
-    const duration = set.exercise.durationSeconds ?? fallbackDuration;
-    if (set.currentSecond < duration) {
-      if (set_i === 0 && set.currentSecond === 0) {
-        say(`[pause] Starting with ${set.exercise.name}!`);
+  for (let task_i = 0; task_i < workout.tasks.length; task_i++) {
+    const task = workout.tasks[task_i];
+    if (task.currentSecond < task.duration) {
+      if (task_i === 0 && task.currentSecond === 0) {
+        say(`[pause] Starting with ${task.name}!`);
       }
-      set.currentSecond += 1;
+      task.currentSecond += 1;
 
-      if (set_i < workout.sets.length - 1) {
-        const nextSet = workout.sets[set_i + 1];
-        if (set.currentSecond === duration - 10) {
-          if (set.exercise.identifier == nextSet.exercise.identifier) {
+      if (task_i < workout.tasks.length - 1) {
+        const nextTask = workout.tasks[task_i + 1];
+        if (task.currentSecond === task.duration - 10) {
+          if (task.name == nextTask.name) {
             say("[pause] Next up: [pause] Same exercise!");
           } else {
-            say(`[pause] Next up: [pause] ${nextSet.exercise.name}!`);
+            say(`[pause] Next up: [pause] ${nextTask.name}!`);
           }
         }
-        if (set.currentSecond === duration) {
+        if (task.currentSecond === task.duration) {
           say("GO!");
         }
       } else {
-        if (set.currentSecond === duration) {
+        if (task.currentSecond === task.duration) {
           say("DONE!");
           break;
         }
