@@ -8,10 +8,6 @@ interface Settings {
   defaultTaskDuration: number;
 }
 
-interface ExerciseGroups {
-  groups: ExerciseGroup[];
-}
-
 interface ExerciseGroup {
   identifier: string;
   name: string;
@@ -230,7 +226,7 @@ function WorkoutTaskRow({ task }: { task: WorkoutTask }) {
 }
 
 function SettingsTab() {
-  const [settings, setSettings] = useSettings();
+  const [settings, _] = useSettings();
   return (
     <>
       <GroupSeparator />
@@ -307,7 +303,24 @@ function ExerciseGroupAdder() {
 }
 
 function ExerciseInfoRow({ exercise }: { exercise: Exercise }) {
-  return <div>{exercise.name}</div>;
+  const [settings, setSettings] = useSettings();
+
+  function renameExercise(newName: string) {
+    const foundExercise = findExercise(
+      settings.exerciseGroups,
+      exercise.identifier
+    )!;
+    foundExercise.name = newName;
+    setSettings(settings);
+  }
+  return (
+    <div>
+      <input
+        value={exercise.name}
+        onChange={(e) => renameExercise(e.target.value)}
+      />
+    </div>
+  );
 }
 
 function ExerciseAdder({
@@ -458,8 +471,8 @@ function say(text: string) {
   sound.play();
 }
 
-function findExercise(exerciseGroups: ExerciseGroups, identifier: string) {
-  for (const group of exerciseGroups.groups) {
+function findExercise(groups: ExerciseGroup[], identifier: string) {
+  for (const group of groups) {
     for (const exercise of group.exercises) {
       if (exercise.identifier === identifier) {
         return exercise;
