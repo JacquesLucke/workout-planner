@@ -347,14 +347,26 @@ function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
     setSettings(settings);
   }
 
+  function removeGroup() {
+    settings.exerciseGroups = settings.exerciseGroups.filter(
+      (g) => g.identifier !== group.identifier
+    );
+    setSettings(settings);
+  }
+
   return (
     <div className="bg-sky-900 my-2 p-2">
-      <div className="font-bold">
-        <input
-          value={group.name}
-          onChange={(e) => renameGroup(e.target.value)}
-          className="bg-transparent p-2 text-sky-50"
-        />
+      <div className="flex justify-between items-center">
+        <div className="font-bold">
+          <input
+            value={group.name}
+            onChange={(e) => renameGroup(e.target.value)}
+            className="bg-transparent p-2 text-sky-50"
+          />
+        </div>
+        <div className="text-sky-300 mr-3 cursor-pointer" onClick={removeGroup}>
+          Remove Group
+        </div>
       </div>
       {group.exercises.map((exercise) => (
         <ExerciseInfoRow
@@ -429,7 +441,7 @@ function ExerciseInfoRow({
         className="bg-transparent pl-2 py-1 text-sky-50"
       />
       <div
-        className="p-1 hover:underline cursor-pointer text-sky-50 mr-2"
+        className="p-1 hover:underline cursor-pointer text-sky-300 mr-2"
         onClick={removeExercise}
       >
         Remove
