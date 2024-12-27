@@ -342,7 +342,11 @@ function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
         />
       </div>
       {group.exercises.map((exercise) => (
-        <ExerciseInfoRow key={exercise.identifier} exercise={exercise} />
+        <ExerciseInfoRow
+          key={exercise.identifier}
+          group={group}
+          exercise={exercise}
+        />
       ))}
       <AddExerciseButton group={group} />
     </div>
@@ -384,7 +388,13 @@ function ExerciseGroupAdder() {
   );
 }
 
-function ExerciseInfoRow({ exercise }: { exercise: Exercise }) {
+function ExerciseInfoRow({
+  group,
+  exercise,
+}: {
+  group: ExerciseGroup;
+  exercise: Exercise;
+}) {
   const [settings, setSettings] = useSettings();
 
   function renameExercise(newName: string) {
@@ -395,13 +405,30 @@ function ExerciseInfoRow({ exercise }: { exercise: Exercise }) {
     foundExercise.name = newName;
     setSettings(settings);
   }
+
+  function removeExercise() {
+    const foundGroup = settings.exerciseGroups.find(
+      (g) => g.identifier === group.identifier
+    )!;
+    foundGroup.exercises = foundGroup.exercises.filter(
+      (e) => e.identifier !== exercise.identifier
+    );
+    setSettings(settings);
+  }
+
   return (
-    <div>
+    <div className="flex justify-between items-center">
       <input
         value={exercise.name}
         onChange={(e) => renameExercise(e.target.value)}
         className="bg-transparent pl-4 py-1 text-sky-50"
       />
+      <div
+        className="p-1 hover:underline cursor-pointer text-sky-50"
+        onClick={removeExercise}
+      >
+        Remove
+      </div>
     </div>
   );
 }
