@@ -229,6 +229,9 @@ function SettingsTab() {
   const [settings, _] = useSettings();
   return (
     <>
+      <WarmupDurationInput />
+      <DefaultTaskDurationInput />
+      <CooldownDurationInput />
       <GroupSeparator />
       {settings.exerciseGroups.map((group) => (
         <>
@@ -243,6 +246,66 @@ function SettingsTab() {
 
 function GroupSeparator() {
   return <div className="border-b border-gray-300" />;
+}
+
+function WarmupDurationInput() {
+  const [settings, setSettings] = useSettings();
+
+  function updateWarmupDuration(newDuration: number) {
+    settings.warmupDuration = newDuration;
+    setSettings(settings);
+  }
+
+  return (
+    <div>
+      Warmup Duration:
+      <input
+        type="number"
+        value={settings.warmupDuration}
+        onChange={(e) => updateWarmupDuration(parseInt(e.target.value))}
+      />
+    </div>
+  );
+}
+
+function DefaultTaskDurationInput() {
+  const [settings, setSettings] = useSettings();
+
+  function updateDefaultTaskDuration(newDuration: number) {
+    settings.defaultTaskDuration = newDuration;
+    setSettings(settings);
+  }
+
+  return (
+    <div>
+      Default Task Duration:
+      <input
+        type="number"
+        value={settings.defaultTaskDuration}
+        onChange={(e) => updateDefaultTaskDuration(parseInt(e.target.value))}
+      />
+    </div>
+  );
+}
+
+function CooldownDurationInput() {
+  const [settings, setSettings] = useSettings();
+
+  function updateCooldownDuration(newDuration: number) {
+    settings.cooldownDuration = newDuration;
+    setSettings(settings);
+  }
+
+  return (
+    <div>
+      Cooldown Duration:
+      <input
+        type="number"
+        value={settings.cooldownDuration}
+        onChange={(e) => updateCooldownDuration(parseInt(e.target.value))}
+      />
+    </div>
+  );
 }
 
 function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
