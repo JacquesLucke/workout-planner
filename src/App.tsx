@@ -1,5 +1,7 @@
 import { useState, useEffect, useContext, createContext, useRef } from "react";
 import useLocalStorageState from "use-local-storage-state";
+import defaultSettings from "./default_settings.json";
+import defaultWorkout from "./default_workout.json";
 
 interface Settings {
   exerciseGroups: ExerciseGroup[];
@@ -488,7 +490,7 @@ function ExerciseInfoRow({
         onKeyDown={(e) =>
           e.key === "Enter" && (e.target as HTMLInputElement).blur()
         }
-        className="bg-transparent pl-2 py-1 text-sky-50"
+        className="bg-transparent pl-2 py-1 text-sky-50 w-2/3"
         ref={nameRef}
         placeholder="Exercise Name"
       />
@@ -543,24 +545,19 @@ function getNewIdentifier() {
 
 function useSettings() {
   return useLocalStorageState<Settings>("settings", {
-    defaultValue: {
-      exerciseGroups: [],
-      warmupDuration: 60,
-      cooldownDuration: 60,
-      defaultTaskDuration: 60,
-    },
+    defaultValue: defaultSettings,
   });
 }
 
 function useCurrentTab() {
   return useLocalStorageState<string>("currentTab", {
-    defaultValue: "settings",
+    defaultValue: "workout",
   });
 }
 
 function useCurrentWorkout() {
   return useLocalStorageState<Workout>("currentWorkout", {
-    defaultValue: { tasks: [] },
+    defaultValue: defaultWorkout,
   });
 }
 

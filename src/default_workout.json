@@ -1,0 +1,6 @@
+{
+  "tasks": [
+    { "name": "Warmup", "duration": 60, "currentSecond": 0 },
+    { "name": "Cooldown", "duration": 120, "currentSecond": 0 }
+  ]
+}
