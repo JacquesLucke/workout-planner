@@ -378,6 +378,9 @@ function ExerciseGroupSection({
           <input
             value={group.name}
             onChange={(e) => renameGroup(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && (e.target as HTMLInputElement).blur()
+            }
             className="bg-transparent p-2 text-sky-50"
             ref={groupNameRef}
             placeholder="Exercise Group Name"
@@ -472,6 +475,9 @@ function ExerciseInfoRow({
       <input
         value={exercise.name}
         onChange={(e) => renameExercise(e.target.value)}
+        onKeyDown={(e) =>
+          e.key === "Enter" && (e.target as HTMLInputElement).blur()
+        }
         className="bg-transparent pl-2 py-1 text-sky-50"
         ref={nameRef}
         placeholder="Exercise Name"
