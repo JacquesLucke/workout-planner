@@ -287,6 +287,10 @@ function WarmupDurationInput() {
   const [settings, setSettings] = useSettings();
 
   function updateWarmupDuration(newDuration: number) {
+    if (isNaN(newDuration)) {
+      newDuration = 0;
+    }
+    console.log(newDuration);
     settings.warmupDuration = newDuration;
     setSettings(settings);
   }
@@ -308,6 +312,9 @@ function DefaultTaskDurationInput() {
   const [settings, setSettings] = useSettings();
 
   function updateDefaultTaskDuration(newDuration: number) {
+    if (isNaN(newDuration)) {
+      newDuration = 0;
+    }
     settings.defaultTaskDuration = newDuration;
     setSettings(settings);
   }
@@ -329,6 +336,9 @@ function CooldownDurationInput() {
   const [settings, setSettings] = useSettings();
 
   function updateCooldownDuration(newDuration: number) {
+    if (isNaN(newDuration)) {
+      newDuration = 0;
+    }
     settings.cooldownDuration = newDuration;
     setSettings(settings);
   }
