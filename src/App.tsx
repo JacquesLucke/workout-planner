@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, createContext } from "react";
+import { useState, useEffect, useContext, createContext, useRef } from "react";
 import useLocalStorageState from "use-local-storage-state";
 
 interface Settings {
@@ -338,6 +338,7 @@ function CooldownDurationInput() {
 
 function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
   const [settings, setSettings] = useSettings();
+  const newExerciseNameRef = useRef<HTMLInputElement>(null);
 
   function renameGroup(newName: string) {
     const foundGroup = settings.exerciseGroups.find(
@@ -368,14 +369,20 @@ function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
           Remove Group
         </div>
       </div>
-      {group.exercises.map((exercise) => (
+      {group.exercises.map((exercise, i) => (
         <ExerciseInfoRow
           key={exercise.identifier}
           group={group}
           exercise={exercise}
+          nameRef={
+            i === group.exercises.length - 1 ? newExerciseNameRef : undefined
+          }
         />
       ))}
-      <AddExerciseButton group={group} />
+      <AddExerciseButton
+        group={group}
+        newExerciseNameRef={newExerciseNameRef}
+      />
     </div>
   );
 }
@@ -408,9 +415,11 @@ function AddExerciseGroupButton() {
 function ExerciseInfoRow({
   group,
   exercise,
+  nameRef,
 }: {
   group: ExerciseGroup;
   exercise: Exercise;
+  nameRef: React.RefObject<HTMLInputElement | null> | undefined;
 }) {
   const [settings, setSettings] = useSettings();
 
@@ -439,6 +448,8 @@ function ExerciseInfoRow({
         value={exercise.name}
         onChange={(e) => renameExercise(e.target.value)}
         className="bg-transparent pl-2 py-1 text-sky-50"
+        ref={nameRef}
+        placeholder="Exercise Name"
       />
       <div
         className="p-1 hover:underline cursor-pointer text-sky-300 mr-2"
@@ -450,7 +461,13 @@ function ExerciseInfoRow({
   );
 }
 
-function AddExerciseButton({ group }: { group: ExerciseGroup }) {
+function AddExerciseButton({
+  group,
+  newExerciseNameRef,
+}: {
+  group: ExerciseGroup;
+  newExerciseNameRef: React.RefObject<HTMLInputElement | null> | undefined;
+}) {
   const [settings, setSettings] = useSettings();
 
   function addExercise() {
@@ -459,9 +476,12 @@ function AddExerciseButton({ group }: { group: ExerciseGroup }) {
     )!;
     foundGroup.exercises.push({
       identifier: getNewIdentifier(),
-      name: "New",
+      name: "",
     });
     setSettings(settings);
+    setTimeout(() => {
+      newExerciseNameRef?.current?.focus();
+    }, 0);
   }
 
   return (
