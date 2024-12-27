@@ -232,11 +232,7 @@ function SettingsTab() {
       <GroupSeparator />
       {settings.exerciseGroups.map((group) => (
         <>
-          <ExerciseGroupSection
-            key={group.identifier}
-            group={group}
-            settings={settings}
-          />
+          <ExerciseGroupSection key={group.identifier} group={group} />
           <GroupSeparator />
         </>
       ))}
@@ -249,16 +245,25 @@ function GroupSeparator() {
   return <div className="border-b border-gray-300" />;
 }
 
-function ExerciseGroupSection({
-  settings,
-  group,
-}: {
-  settings: Settings;
-  group: ExerciseGroup;
-}) {
+function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
+  const [settings, setSettings] = useSettings();
+
+  function renameGroup(newName: string) {
+    const foundGroup = settings.exerciseGroups.find(
+      (group) => group.identifier === group.identifier
+    )!;
+    foundGroup.name = newName;
+    setSettings(settings);
+  }
+
   return (
     <>
-      <div className="font-bold">{group.name}</div>
+      <div className="font-bold">
+        <input
+          value={group.name}
+          onChange={(e) => renameGroup(e.target.value)}
+        />
+      </div>
       {group.exercises.map((exercise) => (
         <ExerciseInfoRow key={exercise.identifier} exercise={exercise} />
       ))}
