@@ -310,7 +310,7 @@ function WarmupDurationInput() {
 function DefaultTaskDurationInput() {
   return (
     <SettingsNumberInput
-      label="Cooldown"
+      label="Set"
       getter={(settings) => settings.defaultTaskDuration}
       setter={(settings, newProp) => (settings.defaultTaskDuration = newProp)}
     />
