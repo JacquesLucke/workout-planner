@@ -588,7 +588,7 @@ function ExerciseInfoRow({
         onKeyDown={(e) =>
           e.key === "Enter" && (e.target as HTMLInputElement).blur()
         }
-        className="bg-transparent pl-2 py-1 text-sky-50 w-2/3"
+        className="bg-transparent pl-2 py-1 text-sky-50 w-64"
         ref={nameRef}
         placeholder="Exercise Name"
       />
