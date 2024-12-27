@@ -254,7 +254,7 @@ function SettingsTab() {
       {settings.exerciseGroups.map((group) => (
         <ExerciseGroupSection key={group.identifier} group={group} />
       ))}
-      <ExerciseGroupAdder />
+      <AddExerciseGroupButton />
     </>
   );
 }
@@ -337,14 +337,14 @@ function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
 
   function renameGroup(newName: string) {
     const foundGroup = settings.exerciseGroups.find(
-      (group) => group.identifier === group.identifier
+      (g) => g.identifier === group.identifier
     )!;
     foundGroup.name = newName;
     setSettings(settings);
   }
 
   return (
-    <div className="bg-sky-900 my-2 pb-2">
+    <div className="bg-sky-900 my-2 p-2">
       <div className="font-bold">
         <input
           value={group.name}
@@ -364,36 +364,26 @@ function ExerciseGroupSection({ group }: { group: ExerciseGroup }) {
   );
 }
 
-function ExerciseGroupAdder() {
+function AddExerciseGroupButton() {
   const [settings, setSettings] = useSettings();
-  const [newGroupName, setNewGroupName] = useState("");
 
   function addGroup() {
     const newIdentifier = getNewIdentifier();
     settings.exerciseGroups.push({
       identifier: newIdentifier,
-      name: newGroupName,
+      name: "New",
       exercises: [],
     });
     setSettings(settings);
-    setNewGroupName("");
   }
 
   return (
     <div className="flex space-x-2">
-      <input
-        value={newGroupName}
-        onChange={(e) => setNewGroupName(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && addGroup()}
-        className="flex-grow border border-gray-300 rounded px-3 py-2"
-        placeholder="Group Name"
-      />
       <button
         onClick={addGroup}
-        className="w-12 bg-blue-500 text-white font-bold rounded hover:bg-blue-600"
-        disabled={!newGroupName}
+        className="m-2 cursor-pointer bg-gray-800 py-1 px-2 rounded hover:bg-gray-900 transition duration-300 text-sky-50 select-none"
       >
-        +
+        Add Exercise Group
       </button>
     </div>
   );
@@ -432,7 +422,7 @@ function ExerciseInfoRow({
       <input
         value={exercise.name}
         onChange={(e) => renameExercise(e.target.value)}
-        className="bg-transparent pl-4 py-1 text-sky-50"
+        className="bg-transparent pl-2 py-1 text-sky-50"
       />
       <div
         className="p-1 hover:underline cursor-pointer text-sky-50 mr-2"
@@ -462,9 +452,9 @@ function AddExerciseButton({ group }: { group: ExerciseGroup }) {
     <div className="px-4 mt-2">
       <button
         onClick={addExercise}
-        className="cursor-pointer bg-gray-800 py-1 px-2 rounded hover:bg-gray-900 transition duration-300 text-sky-50  select-none"
+        className="cursor-pointer bg-gray-800 py-1 px-2 rounded hover:bg-gray-900 transition duration-300 text-sky-50 select-none"
       >
-        Add exercise
+        Add Exercise
       </button>
     </div>
   );
