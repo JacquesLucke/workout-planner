@@ -230,19 +230,49 @@ function WorkoutTaskRow({ task }: { task: WorkoutTask }) {
 }
 
 function SettingsTab() {
+  const [settings, setSettings] = useSettings();
   return (
     <>
+      <GroupSeparator />
+      {settings.exerciseGroups.map((group) => (
+        <>
+          <ExerciseGroupSection
+            key={group.identifier}
+            group={group}
+            settings={settings}
+          />
+          <GroupSeparator />
+        </>
+      ))}
       <ExerciseGroupAdder />
-      <ExerciseGroupSelector />
-      <ExerciseList />
-      <AddExercise />
+    </>
+  );
+}
+
+function GroupSeparator() {
+  return <div className="border-b border-gray-300" />;
+}
+
+function ExerciseGroupSection({
+  settings,
+  group,
+}: {
+  settings: Settings;
+  group: ExerciseGroup;
+}) {
+  return (
+    <>
+      <div className="font-bold">{group.name}</div>
+      {group.exercises.map((exercise) => (
+        <ExerciseInfoRow key={exercise.identifier} exercise={exercise} />
+      ))}
+      <ExerciseAdder settings={settings} group={group} />
     </>
   );
 }
 
 function ExerciseGroupAdder() {
   const [settings, setSettings] = useSettings();
-  const [_, setCurrentGroup] = useCurrentGroupID();
   const [newGroupName, setNewGroupName] = useState("");
 
   function addGroup() {
@@ -253,7 +283,6 @@ function ExerciseGroupAdder() {
       exercises: [],
     });
     setSettings(settings);
-    setCurrentGroup(newIdentifier);
     setNewGroupName("");
   }
 
@@ -277,82 +306,22 @@ function ExerciseGroupAdder() {
   );
 }
 
-function ExerciseGroupSelector() {
-  const [settings] = useSettings();
-  const [currentGroupID, setCurrentGroup] = useCurrentGroupID();
-
-  const currentGroup = settings.exerciseGroups.find(
-    (group) => group.identifier === currentGroupID
-  );
-
-  if (!currentGroup) {
-    return <p>There is no group with this ID.</p>;
-  }
-
-  function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    setCurrentGroup(e.target.value);
-  }
-
-  return (
-    <select
-      value={currentGroup.identifier}
-      onChange={onChange}
-      className="border border-gray-300 rounded px-3 py-2"
-    >
-      {settings.exerciseGroups.map((group) => (
-        <option key={group.identifier} value={group.identifier}>
-          {group.name}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-function ExerciseList() {
-  const [settings] = useSettings();
-  const [currentGroupID] = useCurrentGroupID();
-
-  if (!currentGroupID) {
-    return null;
-  }
-
-  const currentGroup = settings.exerciseGroups.find(
-    (group) => group.identifier === currentGroupID
-  );
-  if (!currentGroup) {
-    return null;
-  }
-
-  return (
-    <div>
-      {currentGroup.exercises.map((exercise) => (
-        <ExerciseInfoRow key={exercise.identifier} exercise={exercise} />
-      ))}
-    </div>
-  );
-}
-
 function ExerciseInfoRow({ exercise }: { exercise: Exercise }) {
   return <div>{exercise.name}</div>;
 }
 
-function AddExercise() {
-  const [settings, setSettings] = useSettings();
-  const [currentGroupID, _] = useCurrentGroupID();
+function ExerciseAdder({
+  settings,
+  group,
+}: {
+  settings: Settings;
+  group: ExerciseGroup;
+}) {
   const [newExerciseName, setNewExerciseName] = useState("");
-
-  if (!currentGroupID) {
-    return null;
-  }
-  const currentGroup = settings.exerciseGroups.find(
-    (group) => group.identifier === currentGroupID
-  );
-  if (!currentGroup) {
-    return null;
-  }
+  const [_, setSettings] = useSettings();
 
   function addExercise() {
-    currentGroup!.exercises.push({
+    group.exercises.push({
       identifier: getNewIdentifier(),
       name: newExerciseName,
     });
@@ -392,12 +361,6 @@ function useSettings() {
       cooldownDuration: 60,
       defaultTaskDuration: 60,
     },
-  });
-}
-
-function useCurrentGroupID() {
-  return useLocalStorageState<string | null>("currentGroupID", {
-    defaultValue: null,
   });
 }
 
