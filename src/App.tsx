@@ -75,24 +75,21 @@ function App() {
 function Tabs() {
   const [currentTab, setCurrentTab] = useCurrentTab();
 
+  const tabNames = ["Workout", "Settings"];
+  const tabIdentifiers = ["workout", "settings"];
+
   return (
-    <nav className="flex space-x-2">
-      <div
-        className={`w-full bg-blue-500 text-white font-bold p-1 text-center cursor-pointer ${
-          currentTab === "workout" ? "bg-blue-300" : "hover:bg-blue-600"
-        }`}
-        onClick={() => setCurrentTab("workout")}
-      >
-        Workout
-      </div>
-      <div
-        className={`w-full bg-blue-500 text-white font-bold p-1 text-center cursor-pointer ${
-          currentTab === "settings" ? "bg-blue-300" : "hover:bg-blue-600"
-        }`}
-        onClick={() => setCurrentTab("settings")}
-      >
-        Settings
-      </div>
+    <nav className="flex justify-center items-center p-2 shadow-md shadow-gray-800 bg-sky-900 mb-2">
+      {tabNames.map((name, i) => (
+        <div
+          className={`flex justify-center items-center shadow-md px-4 py-2 mx-4 rounded bg-gray-800 hover:bg-gray-900 transition duration-300 cursor-pointer text-sky-50 border-green-700 ${
+            tabIdentifiers[i] === currentTab ? "border-y-2" : ""
+          }`}
+          onClick={() => setCurrentTab(tabIdentifiers[i])}
+        >
+          {name}
+        </div>
+      ))}
     </nav>
   );
 }
@@ -112,27 +109,39 @@ function CurrentTab() {
 function WorkoutTab() {
   return (
     <>
-      <NewWorkout />
-      <PlayPause />
-      <ResetWorkoutButton />
+      <WorkoutControlButtons />
       <WorkoutList />
     </>
   );
 }
 
-function PlayPause() {
+function WorkoutControlButtons() {
+  return (
+    <>
+      <div className="flex justify-between px-2 text-sky-50">
+        <NewWorkoutButton />
+        <StartPauseButton />
+        <ResetWorkoutButton />
+      </div>
+    </>
+  );
+}
+
+function StartPauseButton() {
+  const [workout] = useCurrentWorkout();
   const { isPlaying, setIsPlaying } = useContext(IsPlayingContext);
+  const has_began = workoutHasBegan(workout);
   function toggleIsPlaying() {
     setIsPlaying(!isPlaying);
   }
 
   return (
-    <button
+    <div
       onClick={toggleIsPlaying}
-      className="w-full bg-blue-500 text-white font-bold p-1 text-center rounded hover:bg-blue-600"
+      className="cursor-pointer bg-gray-800 py-2 w-full mx-2 rounded hover:bg-gray-900 transition duration-300 text-center"
     >
-      {isPlaying ? "Pause" : "Play"}
-    </button>
+      {isPlaying ? "Pause" : has_began ? "Continue" : "Start"}
+    </div>
   );
 }
 
@@ -149,16 +158,16 @@ function ResetWorkoutButton() {
   }
 
   return (
-    <button
+    <div
       onClick={resetWorkout}
-      className="w-full bg-blue-500 text-white font-bold p-1 text-center rounded hover:bg-blue-600"
+      className="cursor-pointer bg-gray-800 py-2 px-4 rounded hover:bg-gray-900 transition duration-300"
     >
       Reset
-    </button>
+    </div>
   );
 }
 
-function NewWorkout() {
+function NewWorkoutButton() {
   const [settings] = useSettings();
   const [_, setCurrentWorkout] = useCurrentWorkout();
   const { setIsPlaying } = useContext(IsPlayingContext);
@@ -169,12 +178,12 @@ function NewWorkout() {
   }
 
   return (
-    <button
+    <div
       onClick={updateWorkout}
-      className="w-full bg-blue-500 text-white font-bold p-1 text-center rounded hover:bg-blue-600"
+      className="cursor-pointer bg-gray-800 py-2 px-4 rounded hover:bg-gray-900 transition duration-300"
     >
-      New Workout
-    </button>
+      New
+    </div>
   );
 }
 
@@ -496,6 +505,15 @@ function randomChoiceUniqueN<T>(array: T[], n: number) {
   const arrayCopy = [...array];
   shuffleArray(arrayCopy);
   return arrayCopy.slice(0, n);
+}
+
+function workoutHasBegan(workout: Workout) {
+  for (const task of workout.tasks) {
+    if (task.currentSecond > 0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function addSecondInWorkout(workout: Workout) {
