@@ -206,7 +206,7 @@ function WorkoutList() {
   }, [isPlaying]);
 
   return (
-    <div>
+    <div className="my-2 border-b-2 border-sky-800">
       {currentWorkout.tasks.map((task, i) => (
         <WorkoutTaskRow key={i} task={task} />
       ))}
@@ -218,9 +218,9 @@ function WorkoutTaskRow({ task }: { task: WorkoutTask }) {
   const remainingSeconds = task.duration - task.currentSecond;
   const progressText = remainingSeconds === 0 ? "Done" : `${remainingSeconds}s`;
   return (
-    <div className="w-full h-8 relative">
+    <div className="w-full h-8 relative border-t-2 border-sky-800">
       <div
-        className="absolute h-full bg-green-500 transition-all duration-300"
+        className="absolute h-full bg-lime-600 transition-all duration-300"
         style={{ width: `${(task.currentSecond / task.duration) * 100}%` }}
       >
         <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white font-bold whitespace-nowrap">
