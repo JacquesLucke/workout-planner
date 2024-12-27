@@ -133,11 +133,17 @@ function WorkoutControlButtons() {
 function StartPauseButton() {
   const [workout] = useCurrentWorkout();
   const { isPlaying, setIsPlaying } = useContext(IsPlayingContext);
-  const has_began = workoutHasBegan(workout);
-  const has_ended = workoutHasEnded(workout);
+  const hasBegan = workoutHasBegan(workout);
+  const hasEnded = workoutHasEnded(workout);
+  const remainingTime = getRemainingWorkoutTime(workout);
+  const remainingMin = Math.floor(remainingTime / 60);
+  const remainingSec = remainingTime % 60;
+  const remainingTimeText = `${remainingMin}:${
+    remainingSec < 10 ? "0" : ""
+  }${remainingSec}`;
 
   function toggleIsPlaying() {
-    if (has_ended) {
+    if (hasEnded) {
       return;
     }
     setIsPlaying(!isPlaying);
@@ -147,18 +153,18 @@ function StartPauseButton() {
     <div
       onClick={toggleIsPlaying}
       className={`py-2 w-full mx-2 rounded transition duration-300 text-center select-none ${
-        has_ended
+        hasEnded
           ? "bg-gray-600"
           : "bg-gray-800 hover:bg-gray-900 cursor-pointer"
       }`}
     >
       {isPlaying
-        ? "Pause"
-        : has_began
-        ? has_ended
-          ? "Done"
-          : "Continue"
-        : "Start"}
+        ? `Pause (${remainingTimeText})`
+        : hasBegan
+        ? hasEnded
+          ? `Done`
+          : `Continue (${remainingTimeText})`
+        : `Start (${remainingTimeText})`}
     </div>
   );
 }
@@ -639,6 +645,14 @@ function workoutHasEnded(workout: Workout) {
     }
   }
   return true;
+}
+
+function getRemainingWorkoutTime(workout: Workout) {
+  let time = 0;
+  for (const task of workout.tasks) {
+    time += task.duration - task.currentSecond;
+  }
+  return time;
 }
 
 function addSecondInWorkout(workout: Workout) {
