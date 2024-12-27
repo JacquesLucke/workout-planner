@@ -234,7 +234,7 @@ function WorkoutTaskRow({ task }: { task: WorkoutTask }) {
   const remainingSeconds = task.duration - task.currentSecond;
   const progressText = remainingSeconds === 0 ? "Done" : `${remainingSeconds}s`;
   return (
-    <div className="w-full h-8 relative border-t-2 border-sky-800">
+    <div className="w-full h-8 relative border-t-2 border-sky-800 select-none">
       <div
         className="absolute h-full bg-lime-600 transition-all duration-300"
         style={{ width: `${(task.currentSecond / task.duration) * 100}%` }}
