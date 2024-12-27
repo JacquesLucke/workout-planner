@@ -238,9 +238,7 @@ function SettingsTab() {
   const [settings, _] = useSettings();
   return (
     <>
-      <WarmupDurationInput />
-      <DefaultTaskDurationInput />
-      <CooldownDurationInput />
+      <GlobalTimeSettingsBox />
       <GroupSeparator />
       {settings.exerciseGroups.map((group) => (
         <>
@@ -253,8 +251,18 @@ function SettingsTab() {
   );
 }
 
+function GlobalTimeSettingsBox() {
+  return (
+    <div className="text-sky-50 bg-sky-900 p-2 shadow-sm shadow-gray-800">
+      <WarmupDurationInput />
+      <DefaultTaskDurationInput />
+      <CooldownDurationInput />
+    </div>
+  );
+}
+
 function GroupSeparator() {
-  return <div className="border-b border-gray-300" />;
+  return <div className="border-b border-gray-300 my-2" />;
 }
 
 function WarmupDurationInput() {
@@ -266,12 +274,13 @@ function WarmupDurationInput() {
   }
 
   return (
-    <div>
-      Warmup Duration:
+    <div className="flex m-2 items-center">
+      <label className="w-1/3">Warmup:</label>
       <input
         type="number"
         value={settings.warmupDuration}
         onChange={(e) => updateWarmupDuration(parseInt(e.target.value))}
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none"
       />
     </div>
   );
@@ -286,12 +295,13 @@ function DefaultTaskDurationInput() {
   }
 
   return (
-    <div>
-      Default Task Duration:
+    <div className="flex m-2 items-center">
+      <label className="w-1/3">Set:</label>
       <input
         type="number"
         value={settings.defaultTaskDuration}
         onChange={(e) => updateDefaultTaskDuration(parseInt(e.target.value))}
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none"
       />
     </div>
   );
@@ -306,12 +316,13 @@ function CooldownDurationInput() {
   }
 
   return (
-    <div>
-      Cooldown Duration:
+    <div className="flex m-2 items-center">
+      <label className="w-1/3">Cooldown:</label>
       <input
         type="number"
         value={settings.cooldownDuration}
         onChange={(e) => updateCooldownDuration(parseInt(e.target.value))}
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none"
       />
     </div>
   );
