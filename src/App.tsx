@@ -298,135 +298,135 @@ function GlobalTimeSettingsBox() {
 }
 
 function WarmupDurationInput() {
-  const [settings, setSettings] = useSettings();
-
-  function updateWarmupDuration(newDuration: number) {
-    if (isNaN(newDuration)) {
-      newDuration = 0;
-    }
-    console.log(newDuration);
-    settings.warmupDuration = newDuration;
-    setSettings(settings);
-  }
-
   return (
-    <div className="flex m-2 items-center">
-      <label className="w-44">Warmup:</label>
-      <input
-        type="number"
-        value={settings.warmupDuration}
-        onChange={(e) => updateWarmupDuration(parseInt(e.target.value))}
-        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
-      />
-    </div>
+    <SettingsNumberInput
+      label="Warmup"
+      getter={(settings) => settings.warmupDuration}
+      setter={(settings, newProp) => (settings.warmupDuration = newProp)}
+    />
   );
 }
 
 function DefaultTaskDurationInput() {
-  const [settings, setSettings] = useSettings();
-
-  function updateDefaultTaskDuration(newDuration: number) {
-    if (isNaN(newDuration)) {
-      newDuration = 0;
-    }
-    settings.defaultTaskDuration = newDuration;
-    setSettings(settings);
-  }
-
   return (
-    <div className="flex m-2 items-center">
-      <label className="w-44">Set:</label>
-      <input
-        type="number"
-        value={settings.defaultTaskDuration}
-        onChange={(e) => updateDefaultTaskDuration(parseInt(e.target.value))}
-        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
-      />
-    </div>
+    <SettingsNumberInput
+      label="Cooldown"
+      getter={(settings) => settings.defaultTaskDuration}
+      setter={(settings, newProp) => (settings.defaultTaskDuration = newProp)}
+    />
   );
 }
 
 function CooldownDurationInput() {
-  const [settings, setSettings] = useSettings();
-
-  function updateCooldownDuration(newDuration: number) {
-    if (isNaN(newDuration)) {
-      newDuration = 0;
-    }
-    settings.cooldownDuration = newDuration;
-    setSettings(settings);
-  }
-
   return (
-    <div className="flex m-2 items-center">
-      <label className="w-44">Cooldown:</label>
-      <input
-        type="number"
-        value={settings.cooldownDuration}
-        onChange={(e) => updateCooldownDuration(parseInt(e.target.value))}
-        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
-      />
-    </div>
+    <SettingsNumberInput
+      label="Cooldown"
+      getter={(settings) => settings.cooldownDuration}
+      setter={(settings, newProp) => (settings.cooldownDuration = newProp)}
+    />
   );
 }
 
 function GroupsPerWorkoutInput() {
+  return (
+    <SettingsNumberInput
+      label="Groups per Workout"
+      getter={(settings) => settings.groupsPerWorkout}
+      setter={(settings, newProp) => (settings.groupsPerWorkout = newProp)}
+    />
+  );
+}
+
+function SetsPerGroupRangeInput() {
+  return (
+    <SettingsRangeInput
+      label="Sets per Group"
+      getter={(settings) => [
+        settings.minSetsPerGroup,
+        settings.maxSetsPerGroup,
+      ]}
+      setter={(settings, newProp) => {
+        settings.minSetsPerGroup = newProp[0];
+        settings.maxSetsPerGroup = newProp[1];
+      }}
+    />
+  );
+}
+
+function SettingsNumberInput({
+  label,
+  getter,
+  setter,
+}: {
+  label: string;
+  getter: (settings: Settings) => number;
+  setter: (settings: Settings, newProp: number) => void;
+}) {
   const [settings, setSettings] = useSettings();
 
-  function updateGroupsPerWorkout(num: number) {
-    if (isNaN(num)) {
-      num = 0;
+  function updateProp(newProp: number) {
+    if (isNaN(newProp)) {
+      newProp = 0;
     }
-    settings.groupsPerWorkout = num;
+    setter(settings, newProp);
     setSettings(settings);
   }
 
   return (
     <div className="flex m-2 items-center">
-      <label className="w-44">Groups per Workout:</label>
+      <label className="w-44">{label}:</label>
       <input
         type="number"
-        value={settings.groupsPerWorkout}
-        onChange={(e) => updateGroupsPerWorkout(parseInt(e.target.value))}
-        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
+        value={getter(settings)}
+        onChange={(e) => updateProp(parseInt(e.target.value))}
+        className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8 appearance-none"
       />
     </div>
   );
 }
 
-function SetsPerGroupRangeInput() {
+function SettingsRangeInput({
+  label,
+  getter,
+  setter,
+}: {
+  label: string;
+  getter: (settings: Settings) => [number, number];
+  setter: (settings: Settings, newProp: [number, number]) => void;
+}) {
   const [settings, setSettings] = useSettings();
+  const [oldMin, oldMax] = getter(settings);
 
-  function updateMinSetsPerGroup(newMin: number) {
+  function updateMin(newMin: number) {
     if (isNaN(newMin)) {
       newMin = 0;
     }
-    settings.minSetsPerGroup = newMin;
+    setter(settings, [newMin, oldMax]);
     setSettings(settings);
   }
 
-  function updateMaxSetsPerGroup(newMax: number) {
+  function updateMax(newMax: number) {
     if (isNaN(newMax)) {
       newMax = 0;
     }
-    settings.maxSetsPerGroup = newMax;
+    setter(settings, [oldMin, newMax]);
     setSettings(settings);
   }
 
   return (
     <div className="flex m-2 items-center">
-      <label className="w-44">Sets per Group:</label>
+      <label className="w-44">{label}:</label>
       <input
         type="number"
         value={settings.minSetsPerGroup}
-        onChange={(e) => updateMinSetsPerGroup(parseInt(e.target.value))}
+        onChange={(e) => updateMin(parseInt(e.target.value))}
         min={1}
         className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none mr-2 min-w-8"
       />
       <input
         type="number"
         value={settings.maxSetsPerGroup}
-        onChange={(e) => updateMaxSetsPerGroup(parseInt(e.target.value))}
+        onChange={(e) => updateMax(parseInt(e.target.value))}
         min={1}
         className="flex-1 bg-transparent border-lime-700 border-2 rounded px-2 py-1 focus:outline-none min-w-8"
       />
