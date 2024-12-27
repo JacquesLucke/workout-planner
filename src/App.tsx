@@ -424,9 +424,9 @@ function AddExerciseButton({ group }: { group: ExerciseGroup }) {
     <div className="px-4 mt-2">
       <button
         onClick={addExercise}
-        className="w-12 bg-blue-500 hover:bg-blue-600 transition duration-300 text-white font-bold rounded"
+        className="cursor-pointer bg-gray-800 py-1 px-2 rounded hover:bg-gray-900 transition duration-300 text-sky-50"
       >
-        +
+        Add exercise
       </button>
     </div>
   );
