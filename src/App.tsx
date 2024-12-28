@@ -49,27 +49,9 @@ let wakeLock: WakeLockSentinel | null = null;
 function App() {
   const [isPlaying, setIsPlaying] = useState(false);
 
-  async function setIsPlayingWrap(newState: boolean) {
-    setIsPlaying(newState);
-    try {
-      if (newState) {
-        if (wakeLock === null) {
-          wakeLock = await navigator.wakeLock.request("screen");
-        }
-      } else {
-        if (wakeLock !== null) {
-          wakeLock.release();
-          wakeLock = null;
-        }
-      }
-    } catch {}
-  }
-
   return (
     <>
-      <IsPlayingContext.Provider
-        value={{ isPlaying, setIsPlaying: setIsPlayingWrap }}
-      >
+      <IsPlayingContext.Provider value={{ isPlaying, setIsPlaying }}>
         <Tabs />
         <CurrentTab />
       </IsPlayingContext.Provider>
@@ -231,6 +213,12 @@ function WorkoutList() {
     }, 1000);
     return () => clearInterval(interval);
   }, [isPlaying]);
+
+  if (isPlaying) {
+    ensureWakeLock();
+  } else {
+    ensureNoWakeLock();
+  }
 
   return (
     <div className="my-2 border-b-2 border-sky-800">
@@ -854,6 +842,30 @@ function findExercise(groups: ExerciseGroup[], identifier: string) {
     }
   }
   return null;
+}
+
+async function ensureWakeLock() {
+  if (wakeLock !== null) {
+    return;
+  }
+  try {
+    // My fail if e.g. another tab is open.
+    wakeLock = await navigator.wakeLock.request("screen");
+  } catch {
+    return;
+  }
+  wakeLock.addEventListener("release", () => {
+    console.log("wake lock released");
+    wakeLock = null;
+  });
+}
+
+function ensureNoWakeLock() {
+  if (wakeLock === null) {
+    return;
+  }
+  wakeLock.release();
+  wakeLock = null;
 }
 
 export default App;
