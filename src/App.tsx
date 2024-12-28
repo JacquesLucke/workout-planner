@@ -225,7 +225,6 @@ function WorkoutList() {
       {currentWorkout.tasks.map((task, i) => (
         <WorkoutTaskRow key={i} task={task} />
       ))}
-      {wakeLock ? "[wake lock]" : "[no wake lock]"}
     </div>
   );
 }
