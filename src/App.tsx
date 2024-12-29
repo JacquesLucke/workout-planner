@@ -828,7 +828,7 @@ function addSecondInWorkout(workout: Workout) {
 function say(text: string) {
   const encodedText = encodeURIComponent(text);
   const sound = new Audio(
-    `https://speech.jlucke.com/speak?text=${encodedText}&voice=echo`
+    `https://speech.jlucke.com/speak?text=${encodedText}&voice=echo&volume=3.0`
   );
   sound.play();
 }
