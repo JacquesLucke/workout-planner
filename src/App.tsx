@@ -1,5 +1,7 @@
 import { useState, useEffect, useContext, createContext, useRef } from "react";
-import useLocalStorageState from "use-local-storage-state";
+import useLocalStorageState, {
+  LocalStorageState,
+} from "use-local-storage-state";
 import defaultSettings from "./default_settings.json";
 import defaultWorkout from "./default_workout.json";
 
@@ -17,6 +19,7 @@ interface ExerciseGroup {
   identifier: string;
   name: string;
   exercises: Exercise[];
+  active?: boolean;
 }
 
 interface Exercise {
@@ -447,10 +450,24 @@ function ExerciseGroupSection({
     setSettings(settings);
   }
 
+  function toggleActive() {
+    const foundGroup = settings.exerciseGroups.find(
+      (g) => g.identifier === group.identifier
+    )!;
+    foundGroup.active = !foundGroup.active;
+    setSettings(settings);
+  }
+
   return (
     <div className="bg-sky-900 my-2 p-2">
       <div className="flex justify-between items-center">
         <div className="font-bold">
+          <input
+            type="checkbox"
+            checked={group.active ?? true}
+            onChange={toggleActive}
+            className="ml-2 mr-4 cursor-pointer"
+          />
           <input
             value={group.name}
             onChange={(e) => renameGroup(e.target.value)}
@@ -629,10 +646,20 @@ function getNewIdentifier() {
   return Math.random().toString().substring(2);
 }
 
-function useSettings() {
-  return useLocalStorageState<Settings>("settings", {
+function useSettings(): LocalStorageState<Settings> {
+  let result = useLocalStorageState<Settings>("settings", {
     defaultValue: defaultSettings,
   });
+  settingsVersioning(result[0]);
+  return result;
+}
+
+function settingsVersioning(settings: Settings) {
+  for (const group of settings.exerciseGroups) {
+    if (group.active === undefined) {
+      group.active = true;
+    }
+  }
 }
 
 function useCurrentTab() {
@@ -660,10 +687,8 @@ function generateWorkout(settings: Settings) {
     });
   }
 
-  const groups = randomChoiceUniqueN(
-    settings.exerciseGroups,
-    settings.groupsPerWorkout
-  );
+  const activeGroups = settings.exerciseGroups.filter((g) => g.active);
+  const groups = randomChoiceUniqueN(activeGroups, settings.groupsPerWorkout);
   for (const group of groups) {
     const setsInGroup =
       Math.floor(
