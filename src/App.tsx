@@ -2,44 +2,15 @@ import { useState, useEffect, useContext, createContext, useRef } from "react";
 import useLocalStorageState, {
   LocalStorageState,
 } from "use-local-storage-state";
-import defaultSettings from "./default_settings.json";
-import defaultWorkout from "./default_workout.json";
-
-interface Settings {
-  version: number;
-  exerciseGroups: ExerciseGroup[];
-  warmupDuration: number;
-  cooldownDuration: number;
-  defaultTaskDuration: number;
-  firstExercisePreparationDuration: number;
-  groupsPerWorkout: number;
-  minSetsPerGroup: number;
-  maxSetsPerGroup: number;
-  minSetRepetitions: number;
-  maxSetRepetitions: number;
-}
-
-interface ExerciseGroup {
-  identifier: string;
-  name: string;
-  exercises: Exercise[];
-  active: boolean;
-}
-
-interface Exercise {
-  identifier: string;
-  name: string;
-}
-
-interface Workout {
-  tasks: WorkoutTask[];
-}
-
-interface WorkoutTask {
-  name: string;
-  duration: number;
-  currentSecond: number;
-}
+import { defaultSettings } from "./default_settings";
+import { defaultWorkout } from "./default_workout";
+import {
+  Settings,
+  ExerciseGroup,
+  Exercise,
+  Workout,
+  WorkoutTask,
+} from "./Model";
 
 interface IsPlayingState {
   isPlaying: boolean;
@@ -124,6 +95,7 @@ function WorkoutControlButtons() {
 
 function StartPauseButton() {
   const [workout] = useCurrentWorkout();
+  const [settings] = useSettings();
   const { isPlaying, setIsPlaying } = useContext(IsPlayingContext);
   const hasBegan = workoutHasBegan(workout);
   const hasEnded = workoutHasEnded(workout);
@@ -135,7 +107,11 @@ function StartPauseButton() {
     if (hasEnded) {
       return;
     }
-    setIsPlaying(!isPlaying);
+    const newPlayingState = !isPlaying;
+    setIsPlaying(newPlayingState);
+    if (newPlayingState && !hasBegan) {
+      saySomethingIfNecessary(workout, 0, settings);
+    }
   }
 
   return (
@@ -201,6 +177,7 @@ function NewWorkoutButton() {
 }
 
 function WorkoutList() {
+  const [settings] = useSettings();
   const [currentWorkout, setCurrentWorkout] = useCurrentWorkout();
   const { isPlaying, setIsPlaying } = useContext(IsPlayingContext);
 
@@ -209,9 +186,9 @@ function WorkoutList() {
       return;
     }
     let interval = setInterval(() => {
-      const isDone = addSecondInWorkout(currentWorkout);
+      addSecondInWorkout(currentWorkout, settings);
       setCurrentWorkout(currentWorkout);
-      if (isDone) {
+      if (workoutHasEnded(currentWorkout)) {
         setIsPlaying(false);
       }
     }, 1000);
@@ -284,6 +261,7 @@ function GlobalTimeSettingsBox() {
       <FirstExercisePreparationDurationInput />
       <DefaultTaskDurationInput />
       <CooldownDurationInput />
+      <NextExerciseAnnouncementOffsetInput />
       <GroupsPerWorkoutInput />
       <SetsPerGroupRangeInput />
       <SetRepetitionsRangeInput />
@@ -338,6 +316,18 @@ function FirstExercisePreparationDurationInput() {
       getter={(settings) => settings.firstExercisePreparationDuration}
       setter={(settings, newProp) =>
         (settings.firstExercisePreparationDuration = newProp)
+      }
+    />
+  );
+}
+
+function NextExerciseAnnouncementOffsetInput() {
+  return (
+    <SettingsNumberInput
+      label="Announcement Offset"
+      getter={(settings) => settings.nextExerciseAnnouncementOffset}
+      setter={(settings, newProp) =>
+        (settings.nextExerciseAnnouncementOffset = newProp)
       }
     />
   );
@@ -679,6 +669,7 @@ function getNewIdentifier() {
 }
 
 const settingsLocalStorageKey = "settings";
+const workoutLocalStorageKey = "currentWorkout";
 
 function useSettings(): LocalStorageState<Settings> {
   let result = useLocalStorageState<Settings>(settingsLocalStorageKey, {
@@ -687,7 +678,7 @@ function useSettings(): LocalStorageState<Settings> {
   return result;
 }
 
-function settingsVersioning() {
+function versioningSettings() {
   const settings_json = localStorage.getItem(settingsLocalStorageKey);
   if (settings_json === null) {
     return;
@@ -710,7 +701,24 @@ function settingsVersioning() {
   if (settings.maxSetRepetitions === undefined) {
     settings.maxSetRepetitions = 3;
   }
+  if (settings.nextExerciseAnnouncementOffset === undefined) {
+    settings.nextExerciseAnnouncementOffset = 30;
+  }
   localStorage.setItem(settingsLocalStorageKey, JSON.stringify(settings));
+}
+
+function versioningWorkout() {
+  const workout_json = localStorage.getItem(workoutLocalStorageKey);
+  if (workout_json === null) {
+    return;
+  }
+  const workout = JSON.parse(workout_json);
+  for (const task of workout.tasks) {
+    if (task.type === undefined) {
+      task.type = "exercise";
+    }
+  }
+  localStorage.setItem(workoutLocalStorageKey, JSON.stringify(workout));
 }
 
 function useCurrentTab() {
@@ -719,8 +727,8 @@ function useCurrentTab() {
   });
 }
 
-function useCurrentWorkout() {
-  return useLocalStorageState<Workout>("currentWorkout", {
+function useCurrentWorkout(): LocalStorageState<Workout> {
+  return useLocalStorageState<Workout>(workoutLocalStorageKey, {
     defaultValue: defaultWorkout,
   });
 }
@@ -737,6 +745,7 @@ function generateWorkout(settings: Settings) {
       name: "Warmup",
       duration: settings.warmupDuration,
       currentSecond: 0,
+      type: "warmup",
     });
   }
 
@@ -746,6 +755,7 @@ function generateWorkout(settings: Settings) {
       name: "Prepare " + mainTasks[0].name,
       duration: settings.firstExercisePreparationDuration,
       currentSecond: 0,
+      type: "initial-preparation",
     };
     workout.tasks.push(firstExercisePreparationTask);
   }
@@ -757,6 +767,7 @@ function generateWorkout(settings: Settings) {
       name: "Cooldown",
       duration: settings.cooldownDuration,
       currentSecond: 0,
+      type: "cooldown",
     });
   }
 
@@ -796,6 +807,7 @@ function createMainTasksForWorkout(settings: Settings) {
           name: exercise.name,
           duration: settings.defaultTaskDuration,
           currentSecond: 0,
+          type: "exercise",
         });
       }
     }
@@ -904,43 +916,100 @@ function secondsToTimeString(seconds: number) {
   return `${minutes}:${secondsNum < 10 ? "0" : ""}${secondsNum}`;
 }
 
-function addSecondInWorkout(workout: Workout) {
+function addSecondInWorkout(workout: Workout, settings: Settings) {
   for (let task_i = 0; task_i < workout.tasks.length; task_i++) {
     const task = workout.tasks[task_i];
     if (task.currentSecond < task.duration) {
-      if (task_i === 0 && task.currentSecond === 0) {
-        say(`[pause] Starting with ${task.name}!`);
-      }
       task.currentSecond += 1;
 
-      const nextUpTime = Math.max(5, Math.ceil(task.duration * 0.25));
-      if (task_i < workout.tasks.length - 1) {
-        const nextTask = workout.tasks[task_i + 1];
-        if (task.currentSecond === task.duration - nextUpTime) {
-          if (task.name == nextTask.name) {
+      saySomethingIfNecessary(workout, task_i, settings);
+      if (task.currentSecond === task.duration) {
+        if (task_i < workout.tasks.length - 1) {
+          saySomethingIfNecessary(workout, task_i + 1, settings);
+        }
+      }
+      return;
+    }
+  }
+  return;
+}
+
+function saySomethingIfNecessary(
+  workout: Workout,
+  currentTaskIndex: number,
+  settings: Settings
+) {
+  const task = workout.tasks[currentTaskIndex];
+  const nextTask =
+    currentTaskIndex < workout.tasks.length - 1
+      ? workout.tasks[currentTaskIndex + 1]
+      : null;
+
+  const taskJustStarted = task.currentSecond === 0;
+  const taskJustEnded = task.currentSecond === task.duration;
+  const fiveSecondsToGo = task.currentSecond === task.duration - 5;
+  const halfwayThrough = task.currentSecond === Math.floor(task.duration / 2);
+
+  // Using "[pause]" because otherwise sometimes the speech generation misses some words.
+  const fiveSecondsToGoMessage = "[pause] 5 seconds to go!";
+  const halfwayThroughMessage = "[pause] Halfway through!";
+
+  switch (task.type) {
+    case "warmup": {
+      if (taskJustStarted) {
+        say(`[pause] Starting with warmup!`);
+      } else if (halfwayThrough) {
+        say(halfwayThroughMessage);
+      } else if (fiveSecondsToGo) {
+        say(fiveSecondsToGoMessage);
+      }
+      break;
+    }
+    case "initial-preparation": {
+      if (taskJustStarted && nextTask) {
+        say(`[pause] Prepare ${nextTask.name}!`);
+      } else if (fiveSecondsToGo) {
+        say(fiveSecondsToGoMessage);
+      }
+      break;
+    }
+    case "exercise": {
+      if (taskJustStarted) {
+        say(`[pause] GO!`);
+      } else if (
+        task.currentSecond ===
+        task.duration - settings.nextExerciseAnnouncementOffset
+      ) {
+        if (nextTask) {
+          if (nextTask.name == task.name) {
             say("[pause] Next up: [pause] Same exercise!");
           } else {
             say(`[pause] Next up: [pause] ${nextTask.name}!`);
           }
         }
-        if (task.currentSecond === task.duration) {
-          say("GO!");
-        }
-      } else {
-        if (task.currentSecond === task.duration) {
-          say("DONE!");
-          break;
-        }
+      } else if (
+        settings.nextExerciseAnnouncementOffset >= 25 &&
+        task.currentSecond == task.duration - 15
+      ) {
+        say("[pause] 15 seconds to go!");
+      } else if (fiveSecondsToGo) {
+        say(fiveSecondsToGoMessage);
       }
-      if (nextUpTime >= 10) {
-        if (task.currentSecond === task.duration - 5) {
-          say("[pause] 5 seconds to go!");
-        }
+      break;
+    }
+    case "cooldown": {
+      if (taskJustStarted) {
+        say(`[pause] Go!`);
+      } else if (halfwayThrough) {
+        say(halfwayThroughMessage);
+      } else if (fiveSecondsToGo) {
+        say(fiveSecondsToGoMessage);
+      } else if (taskJustEnded) {
+        say(`[pause] DONE!`);
       }
-      return false;
+      break;
     }
   }
-  return true;
 }
 
 function say(text: string) {
@@ -986,6 +1055,7 @@ function ensureNoWakeLock() {
   wakeLock = null;
 }
 
-settingsVersioning();
+versioningSettings();
+versioningWorkout();
 
 export default App;
