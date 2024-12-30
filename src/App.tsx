@@ -950,14 +950,13 @@ function saySomethingIfNecessary(
   const fiveSecondsToGo = task.currentSecond === task.duration - 5;
   const halfwayThrough = task.currentSecond === Math.floor(task.duration / 2);
 
-  // Using "[pause]" because otherwise sometimes the speech generation misses some words.
-  const fiveSecondsToGoMessage = "[pause] 5 seconds to go!";
-  const halfwayThroughMessage = "[pause] Halfway through!";
+  const fiveSecondsToGoMessage = "5 seconds to go!";
+  const halfwayThroughMessage = "Halfway through!";
 
   switch (task.type) {
     case "warmup": {
       if (taskJustStarted) {
-        say(`[pause] Starting with warmup!`);
+        say(`Starting with warmup!`);
       } else if (halfwayThrough) {
         say(halfwayThroughMessage);
       } else if (fiveSecondsToGo) {
@@ -967,7 +966,7 @@ function saySomethingIfNecessary(
     }
     case "initial-preparation": {
       if (taskJustStarted && nextTask) {
-        say(`[pause] Prepare ${nextTask.name}!`);
+        say(`Prepare ${nextTask.name}!`);
       } else if (fiveSecondsToGo) {
         say(fiveSecondsToGoMessage);
       }
@@ -975,23 +974,23 @@ function saySomethingIfNecessary(
     }
     case "exercise": {
       if (taskJustStarted) {
-        say(`[pause] GO!`);
+        say(`GO!`);
       } else if (
         task.currentSecond ===
         task.duration - settings.nextExerciseAnnouncementOffset
       ) {
         if (nextTask) {
           if (nextTask.name == task.name) {
-            say("[pause] Next up: [pause] Same exercise!");
+            say("Next up: [pause] Same exercise!");
           } else {
-            say(`[pause] Next up: [pause] ${nextTask.name}!`);
+            say(`Next up: [pause] ${nextTask.name}!`);
           }
         }
       } else if (
         settings.nextExerciseAnnouncementOffset >= 25 &&
         task.currentSecond == task.duration - 15
       ) {
-        say("[pause] 15 seconds to go!");
+        say("15 seconds to go!");
       } else if (fiveSecondsToGo) {
         say(fiveSecondsToGoMessage);
       }
@@ -999,13 +998,13 @@ function saySomethingIfNecessary(
     }
     case "cooldown": {
       if (taskJustStarted) {
-        say(`[pause] Go!`);
+        say(`Go!`);
       } else if (halfwayThrough) {
         say(halfwayThroughMessage);
       } else if (fiveSecondsToGo) {
         say(fiveSecondsToGoMessage);
       } else if (taskJustEnded) {
-        say(`[pause] DONE!`);
+        say(`DONE!`);
       }
       break;
     }
@@ -1013,7 +1012,9 @@ function saySomethingIfNecessary(
 }
 
 function say(text: string) {
-  const encodedText = encodeURIComponent(text);
+  // Adding "[pause]" because otherwise sometimes the speech generation misses some words.
+  const updatedText = "[pause] " + text;
+  const encodedText = encodeURIComponent(updatedText);
   const sound = new Audio(
     `https://speech.jlucke.com/speak?text=${encodedText}&voice=echo&volume=3.0`
   );
