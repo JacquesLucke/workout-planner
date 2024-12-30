@@ -6,10 +6,12 @@ import defaultSettings from "./default_settings.json";
 import defaultWorkout from "./default_workout.json";
 
 interface Settings {
+  version: number;
   exerciseGroups: ExerciseGroup[];
   warmupDuration: number;
   cooldownDuration: number;
   defaultTaskDuration: number;
+  firstExercisePreparationDuration: number;
   groupsPerWorkout: number;
   minSetsPerGroup: number;
   maxSetsPerGroup: number;
@@ -19,7 +21,7 @@ interface ExerciseGroup {
   identifier: string;
   name: string;
   exercises: Exercise[];
-  active?: boolean;
+  active: boolean;
 }
 
 interface Exercise {
@@ -280,6 +282,7 @@ function GlobalTimeSettingsBox() {
   return (
     <div className="text-sky-50 bg-sky-900 p-2 shadow-sm shadow-gray-800">
       <WarmupDurationInput />
+      <FirstExercisePreparationDurationInput />
       <DefaultTaskDurationInput />
       <CooldownDurationInput />
       <GroupsPerWorkoutInput />
@@ -324,6 +327,18 @@ function GroupsPerWorkoutInput() {
       label="Groups per Workout"
       getter={(settings) => settings.groupsPerWorkout}
       setter={(settings, newProp) => (settings.groupsPerWorkout = newProp)}
+    />
+  );
+}
+
+function FirstExercisePreparationDurationInput() {
+  return (
+    <SettingsNumberInput
+      label="Initial Preparation"
+      getter={(settings) => settings.firstExercisePreparationDuration}
+      setter={(settings, newProp) =>
+        (settings.firstExercisePreparationDuration = newProp)
+      }
     />
   );
 }
@@ -517,6 +532,7 @@ function AddExerciseGroupButton({
       identifier: newIdentifier,
       name: "",
       exercises: [],
+      active: true,
     });
     setSettings(settings);
     setTimeout(() => {
@@ -646,20 +662,33 @@ function getNewIdentifier() {
   return Math.random().toString().substring(2);
 }
 
+const settingsLocalStorageKey = "settings";
+
 function useSettings(): LocalStorageState<Settings> {
-  let result = useLocalStorageState<Settings>("settings", {
+  let result = useLocalStorageState<Settings>(settingsLocalStorageKey, {
     defaultValue: defaultSettings,
   });
-  settingsVersioning(result[0]);
   return result;
 }
 
-function settingsVersioning(settings: Settings) {
+function settingsVersioning() {
+  const settings_json = localStorage.getItem(settingsLocalStorageKey);
+  if (settings_json === null) {
+    return;
+  }
+  const settings = JSON.parse(settings_json);
   for (const group of settings.exerciseGroups) {
     if (group.active === undefined) {
       group.active = true;
     }
   }
+  if (settings.firstExercisePreparationDuration === undefined) {
+    settings.firstExercisePreparationDuration = 0;
+  }
+  if (settings.version === undefined) {
+    settings.version = 1;
+  }
+  localStorage.setItem(settingsLocalStorageKey, JSON.stringify(settings));
 }
 
 function useCurrentTab() {
@@ -679,6 +708,8 @@ function generateWorkout(settings: Settings) {
     tasks: [],
   };
 
+  const mainTasks = createMainTasksForWorkout(settings);
+
   if (settings.warmupDuration > 0) {
     workout.tasks.push({
       name: "Warmup",
@@ -687,6 +718,31 @@ function generateWorkout(settings: Settings) {
     });
   }
 
+  let firstExercisePreparationTask: WorkoutTask | null = null;
+  if (settings.firstExercisePreparationDuration > 0 && mainTasks.length > 0) {
+    firstExercisePreparationTask = {
+      name: "Prepare " + mainTasks[0].name,
+      duration: settings.firstExercisePreparationDuration,
+      currentSecond: 0,
+    };
+    workout.tasks.push(firstExercisePreparationTask);
+  }
+
+  workout.tasks.push(...mainTasks);
+
+  if (settings.cooldownDuration > 0) {
+    workout.tasks.push({
+      name: "Cooldown",
+      duration: settings.cooldownDuration,
+      currentSecond: 0,
+    });
+  }
+
+  return workout;
+}
+
+function createMainTasksForWorkout(settings: Settings) {
+  const tasks: WorkoutTask[] = [];
   const activeGroups = settings.exerciseGroups.filter((g) => g.active);
   const groups = randomChoiceUniqueN(activeGroups, settings.groupsPerWorkout);
   for (const group of groups) {
@@ -712,7 +768,7 @@ function generateWorkout(settings: Settings) {
       const exercise = exercisesToUse[i];
       const setsNum = setDistribution[i];
       for (let j = 0; j < setsNum; j++) {
-        workout.tasks.push({
+        tasks.push({
           name: exercise.name,
           duration: settings.defaultTaskDuration,
           currentSecond: 0,
@@ -721,15 +777,7 @@ function generateWorkout(settings: Settings) {
     }
   }
 
-  if (settings.cooldownDuration > 0) {
-    workout.tasks.push({
-      name: "Cooldown",
-      duration: settings.cooldownDuration,
-      currentSecond: 0,
-    });
-  }
-
-  return workout;
+  return tasks;
 }
 
 function getWorkoutGroupSetDistribution(setsNum: number) {
@@ -892,5 +940,7 @@ function ensureNoWakeLock() {
   wakeLock.release();
   wakeLock = null;
 }
+
+settingsVersioning();
 
 export default App;
