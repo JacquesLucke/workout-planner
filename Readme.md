@@ -1,3 +1,5 @@
+# Workout Planner
+
 This is a small personal project with the following goals:
 
 - Reduce friction to get started with a home workout in the morning.
