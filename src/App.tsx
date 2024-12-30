@@ -125,12 +125,9 @@ function StartPauseButton() {
   const { isPlaying, setIsPlaying } = useContext(IsPlayingContext);
   const hasBegan = workoutHasBegan(workout);
   const hasEnded = workoutHasEnded(workout);
+
+  const totalTime = getTotalWorkoutTime(workout);
   const remainingTime = getRemainingWorkoutTime(workout);
-  const remainingMin = Math.floor(remainingTime / 60);
-  const remainingSec = remainingTime % 60;
-  const remainingTimeText = `${remainingMin}:${
-    remainingSec < 10 ? "0" : ""
-  }${remainingSec}`;
 
   function toggleIsPlaying() {
     if (hasEnded) {
@@ -149,12 +146,12 @@ function StartPauseButton() {
       }`}
     >
       {isPlaying
-        ? `Pause (${remainingTimeText})`
+        ? `Pause (${secondsToTimeString(remainingTime)})`
         : hasBegan
         ? hasEnded
-          ? `Done`
-          : `Continue (${remainingTimeText})`
-        : `Start (${remainingTimeText})`}
+          ? `Done (${secondsToTimeString(totalTime)})`
+          : `Continue (${secondsToTimeString(remainingTime)})`
+        : `Start (${secondsToTimeString(totalTime)})`}
     </div>
   );
 }
@@ -857,6 +854,21 @@ function getRemainingWorkoutTime(workout: Workout) {
     time += task.duration - task.currentSecond;
   }
   return time;
+}
+
+function getTotalWorkoutTime(workout: Workout) {
+  let time = 0;
+  for (const task of workout.tasks) {
+    time += task.duration;
+  }
+  return time;
+}
+
+function secondsToTimeString(seconds: number) {
+  seconds = Math.floor(seconds);
+  const minutes = Math.floor(seconds / 60);
+  const secondsNum = seconds % 60;
+  return `${minutes}:${secondsNum < 10 ? "0" : ""}${secondsNum}`;
 }
 
 function addSecondInWorkout(workout: Workout) {
