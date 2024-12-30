@@ -15,6 +15,8 @@ interface Settings {
   groupsPerWorkout: number;
   minSetsPerGroup: number;
   maxSetsPerGroup: number;
+  minSetRepetitions: number;
+  maxSetRepetitions: number;
 }
 
 interface ExerciseGroup {
@@ -284,6 +286,7 @@ function GlobalTimeSettingsBox() {
       <CooldownDurationInput />
       <GroupsPerWorkoutInput />
       <SetsPerGroupRangeInput />
+      <SetRepetitionsRangeInput />
     </div>
   );
 }
@@ -351,6 +354,22 @@ function SetsPerGroupRangeInput() {
       setter={(settings, newProp) => {
         settings.minSetsPerGroup = newProp[0];
         settings.maxSetsPerGroup = newProp[1];
+      }}
+    />
+  );
+}
+
+function SetRepetitionsRangeInput() {
+  return (
+    <SettingsRangeInput
+      label="Set Repetitions"
+      getter={(settings) => [
+        settings.minSetRepetitions,
+        settings.maxSetRepetitions,
+      ]}
+      setter={(settings, newProp) => {
+        settings.minSetRepetitions = newProp[0];
+        settings.maxSetRepetitions = newProp[1];
       }}
     />
   );
@@ -685,6 +704,12 @@ function settingsVersioning() {
   if (settings.version === undefined) {
     settings.version = 1;
   }
+  if (settings.minSetRepetitions === undefined) {
+    settings.minSetRepetitions = 2;
+  }
+  if (settings.maxSetRepetitions === undefined) {
+    settings.maxSetRepetitions = 3;
+  }
   localStorage.setItem(settingsLocalStorageKey, JSON.stringify(settings));
 }
 
@@ -743,12 +768,14 @@ function createMainTasksForWorkout(settings: Settings) {
   const activeGroups = settings.exerciseGroups.filter((g) => g.active);
   const groups = randomChoiceUniqueN(activeGroups, settings.groupsPerWorkout);
   for (const group of groups) {
-    const setsInGroup =
-      Math.floor(
-        Math.random() *
-          (settings.maxSetsPerGroup - settings.minSetsPerGroup + 1)
-      ) + settings.minSetsPerGroup;
-    const setDistribution = getWorkoutGroupSetDistribution(setsInGroup);
+    const setsInGroup = randomIntegerInRangeInclusive(
+      settings.minSetsPerGroup,
+      settings.maxSetsPerGroup
+    );
+    const setDistribution = getWorkoutGroupSetDistribution(
+      setsInGroup,
+      settings
+    );
     let exercisesToUse;
     if (setDistribution.length <= group.exercises.length) {
       exercisesToUse = randomChoiceUniqueN(
@@ -777,21 +804,27 @@ function createMainTasksForWorkout(settings: Settings) {
   return tasks;
 }
 
-function getWorkoutGroupSetDistribution(setsNum: number) {
-  if (setsNum <= 3) {
-    return [setsNum];
-  }
+function getWorkoutGroupSetDistribution(setsNum: number, settings: Settings) {
+  let remainingAttempts = 100;
   while (true) {
     let count = 0;
     let result = [];
     while (count < setsNum) {
-      const nextNum = randomChoice([2, 3]);
+      const nextNum = randomIntegerInRangeInclusive(
+        settings.minSetRepetitions,
+        settings.maxSetRepetitions
+      );
       result.push(nextNum);
       count += nextNum;
+    }
+    if (remainingAttempts === 0) {
+      result[result.length - 1] -= count - setsNum;
+      return result;
     }
     if (count === setsNum) {
       return result;
     }
+    remainingAttempts -= 1;
   }
 }
 
@@ -826,8 +859,8 @@ function randomChoiceUniqueN<T>(array: T[], n: number) {
   return arrayCopy.slice(0, n);
 }
 
-function randomChoice<T>(array: T[]) {
-  return array[Math.floor(Math.random() * array.length)];
+function randomIntegerInRangeInclusive(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function workoutHasBegan(workout: Workout) {

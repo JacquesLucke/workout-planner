@@ -69,5 +69,7 @@
   "maxSetsPerGroup": 7,
   "groupsPerWorkout": 2,
   "firstExercisePreparationDuration": 20,
+  "minSetRepetitions": 2,
+  "maxSetRepetitions": 3,
   "version": 1
 }
