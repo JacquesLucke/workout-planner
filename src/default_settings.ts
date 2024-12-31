@@ -25,6 +25,7 @@ export const defaultSettings: Settings = {
           identifier: "13618314841624435",
           name: "Dumbbell Incline Bench Press",
         },
+        { identifier: "4878896730504", name: "Push-Up" },
       ],
     },
     {
