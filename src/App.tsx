@@ -23,6 +23,7 @@ import {
   addSecondInWorkout,
   saySomethingIfNecessary,
 } from "./workout";
+import { ensureWakeLock, ensureNoWakeLock } from "./wake_lock";
 
 do_versioning();
 
@@ -35,8 +36,6 @@ const IsPlayingContext = createContext<IsPlayingState>({
   isPlaying: false,
   setIsPlaying: () => {},
 });
-
-let wakeLock: WakeLockSentinel | null = null;
 
 function App() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -800,30 +799,6 @@ function findExercise(groups: ExerciseGroup[], identifier: string) {
     }
   }
   return null;
-}
-
-async function ensureWakeLock() {
-  if (wakeLock !== null) {
-    return;
-  }
-  try {
-    // My fail if e.g. another tab is open.
-    wakeLock = await navigator.wakeLock.request("screen");
-  } catch {
-    return;
-  }
-  wakeLock.addEventListener("release", () => {
-    console.log("wake lock released");
-    wakeLock = null;
-  });
-}
-
-function ensureNoWakeLock() {
-  if (wakeLock === null) {
-    return;
-  }
-  wakeLock.release();
-  wakeLock = null;
 }
 
 export default App;
