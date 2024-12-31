@@ -1,17 +1,6 @@
 import { useState, useEffect, useContext, createContext, useRef } from "react";
-import useLocalStorageState, {
-  LocalStorageState,
-} from "use-local-storage-state";
 import { defaultSettings } from "./default_settings";
-import { defaultWorkout } from "./default_workout";
-import {
-  Settings,
-  ExerciseGroup,
-  Exercise,
-  Workout,
-  WorkoutTask,
-} from "./model";
-import { settingsLocalStorageKey, workoutLocalStorageKey } from "./model";
+import { Settings, ExerciseGroup, Exercise, WorkoutTask } from "./model";
 import { do_versioning } from "./versioning";
 import {
   workoutHasBegan,
@@ -24,6 +13,7 @@ import {
   saySomethingIfNecessary,
 } from "./workout";
 import { ensureWakeLock, ensureNoWakeLock } from "./wake_lock";
+import { useCurrentTab, useCurrentWorkout, useSettings } from "./local_storage";
 
 do_versioning();
 
@@ -762,25 +752,6 @@ function AddExerciseButton({
 
 function getNewIdentifier() {
   return Math.random().toString().substring(2);
-}
-
-function useSettings(): LocalStorageState<Settings> {
-  let result = useLocalStorageState<Settings>(settingsLocalStorageKey, {
-    defaultValue: defaultSettings,
-  });
-  return result;
-}
-
-function useCurrentTab() {
-  return useLocalStorageState<string>("currentTab", {
-    defaultValue: "workout",
-  });
-}
-
-function useCurrentWorkout(): LocalStorageState<Workout> {
-  return useLocalStorageState<Workout>(workoutLocalStorageKey, {
-    defaultValue: defaultWorkout,
-  });
 }
 
 function secondsToTimeString(seconds: number) {
