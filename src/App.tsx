@@ -20,6 +20,8 @@ import {
   getRemainingWorkoutTime,
   generateWorkout,
   getOverriddenExerciseDuration,
+  addSecondInWorkout,
+  saySomethingIfNecessary,
 } from "./workout";
 
 do_versioning();
@@ -787,111 +789,6 @@ function secondsToTimeString(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const secondsNum = seconds % 60;
   return `${minutes}:${secondsNum < 10 ? "0" : ""}${secondsNum}`;
-}
-
-function addSecondInWorkout(workout: Workout, settings: Settings) {
-  for (let task_i = 0; task_i < workout.tasks.length; task_i++) {
-    const task = workout.tasks[task_i];
-    if (task.currentSecond < task.duration) {
-      task.currentSecond += 1;
-
-      saySomethingIfNecessary(workout, task_i, settings);
-      if (task.currentSecond === task.duration) {
-        if (task_i < workout.tasks.length - 1) {
-          saySomethingIfNecessary(workout, task_i + 1, settings);
-        }
-      }
-      return;
-    }
-  }
-  return;
-}
-
-function saySomethingIfNecessary(
-  workout: Workout,
-  currentTaskIndex: number,
-  settings: Settings
-) {
-  const task = workout.tasks[currentTaskIndex];
-  const nextTask =
-    currentTaskIndex < workout.tasks.length - 1
-      ? workout.tasks[currentTaskIndex + 1]
-      : null;
-
-  const taskJustStarted = task.currentSecond === 0;
-  const taskJustEnded = task.currentSecond === task.duration;
-  const fiveSecondsToGo = task.currentSecond === task.duration - 5;
-  const halfwayThrough = task.currentSecond === Math.floor(task.duration / 2);
-
-  const fiveSecondsToGoMessage = "5 seconds to go!";
-  const halfwayThroughMessage = "Halfway through!";
-
-  switch (task.type) {
-    case "warmup": {
-      if (taskJustStarted) {
-        say(`Starting with warmup!`);
-      } else if (halfwayThrough) {
-        say(halfwayThroughMessage);
-      } else if (fiveSecondsToGo) {
-        say(fiveSecondsToGoMessage);
-      }
-      break;
-    }
-    case "initial-preparation": {
-      if (taskJustStarted && nextTask) {
-        say(`Prepare ${nextTask.name}!`);
-      } else if (fiveSecondsToGo) {
-        say(fiveSecondsToGoMessage);
-      }
-      break;
-    }
-    case "exercise": {
-      if (taskJustStarted) {
-        say(`GO!`);
-      } else if (
-        task.currentSecond ===
-        task.duration - settings.nextExerciseAnnouncementOffset
-      ) {
-        if (nextTask) {
-          if (nextTask.name == task.name) {
-            say("Next up: [pause] Same exercise!");
-          } else {
-            say(`Next up: [pause] ${nextTask.name}!`);
-          }
-        }
-      } else if (
-        settings.nextExerciseAnnouncementOffset >= 25 &&
-        task.currentSecond == task.duration - 15
-      ) {
-        say("15 seconds to go!");
-      } else if (fiveSecondsToGo) {
-        say(fiveSecondsToGoMessage);
-      }
-      break;
-    }
-    case "cooldown": {
-      if (taskJustStarted) {
-        say(`Go!`);
-      } else if (halfwayThrough) {
-        say(halfwayThroughMessage);
-      } else if (fiveSecondsToGo) {
-        say(fiveSecondsToGoMessage);
-      } else if (taskJustEnded) {
-        say(`DONE!`);
-      }
-      break;
-    }
-  }
-}
-
-function say(text: string) {
-  // Adding "[pause]" because otherwise sometimes the speech generation misses some words.
-  const updatedText = "[pause] " + text;
-  const encodedText = encodeURIComponent(updatedText);
-  const sound = new Audio(
-    `https://speech.jlucke.com/speak?text=${encodedText}&voice=echo&volume=3.0`
-  );
-  sound.play();
 }
 
 function findExercise(groups: ExerciseGroup[], identifier: string) {
