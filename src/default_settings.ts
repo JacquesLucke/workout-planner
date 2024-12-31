@@ -1,4 +1,4 @@
-import { Settings } from "./Model";
+import { Settings } from "./model";
 
 export const defaultSettings: Settings = {
   exerciseGroups: [

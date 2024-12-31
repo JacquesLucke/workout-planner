@@ -43,3 +43,6 @@ export type WorkoutTaskTypeString =
   | "initial-preparation"
   | "exercise"
   | "cooldown";
+
+export const settingsLocalStorageKey = "settings";
+export const workoutLocalStorageKey = "currentWorkout";

@@ -1,4 +1,4 @@
-import { Workout } from "./Model";
+import { Workout } from "./model";
 
 export const defaultWorkout: Workout = {
   tasks: [
