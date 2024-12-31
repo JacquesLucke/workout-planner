@@ -309,7 +309,7 @@ function ExerciseGroupSection({
             onKeyDown={(e) =>
               e.key === "Enter" && (e.target as HTMLInputElement).blur()
             }
-            className="bg-transparent p-2 text-sky-50"
+            className="bg-transparent p-2 text-sky-50 w-44"
             ref={groupNameRef}
             placeholder="Exercise Group Name"
           />
