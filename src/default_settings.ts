@@ -7,11 +7,20 @@ export const defaultSettings: Settings = {
       name: "Shoulder",
       active: true,
       exercises: [
-        { identifier: "0951374373098468", name: "Dumbbell Shoulder Press" },
-        { identifier: "689689256478925", name: "Dumbbell Lateral Raise" },
+        {
+          identifier: "0951374373098468",
+          name: "Dumbbell Shoulder Press",
+          durationOverride: "+10",
+        },
+        {
+          identifier: "689689256478925",
+          name: "Dumbbell Lateral Raise",
+          durationOverride: "+0",
+        },
         {
           identifier: "9804208661246041",
           name: 'Dumbbell Incline "W" Raise',
+          durationOverride: "+0",
         },
       ],
     },
@@ -20,12 +29,21 @@ export const defaultSettings: Settings = {
       name: "Chest",
       active: true,
       exercises: [
-        { identifier: "1679728276225425", name: "Dumbbell Incline Fly" },
+        {
+          identifier: "1679728276225425",
+          name: "Dumbbell Incline Fly",
+          durationOverride: "+0",
+        },
         {
           identifier: "13618314841624435",
           name: "Dumbbell Incline Bench Press",
+          durationOverride: "+0",
         },
-        { identifier: "4878896730504", name: "Push-Up" },
+        {
+          identifier: "4878896730504",
+          name: "Push-Up",
+          durationOverride: "+0",
+        },
       ],
     },
     {
@@ -33,8 +51,16 @@ export const defaultSettings: Settings = {
       name: "Back",
       active: true,
       exercises: [
-        { identifier: "5357330343846376", name: "Dumbbell Lying Row" },
-        { identifier: "4815409418991401", name: "Dumbbell Bent-Over Row" },
+        {
+          identifier: "5357330343846376",
+          name: "Dumbbell Lying Row",
+          durationOverride: "+0",
+        },
+        {
+          identifier: "4815409418991401",
+          name: "Dumbbell Bent-Over Row",
+          durationOverride: "+20",
+        },
       ],
     },
     {
@@ -42,16 +68,30 @@ export const defaultSettings: Settings = {
       name: "Arms",
       active: true,
       exercises: [
-        { identifier: "5326896622388075", name: "Barbell Curl" },
-        { identifier: "4260281125530243", name: "Dumbbell Curl" },
-        { identifier: "3601870208425586", name: "Bench Dip" },
+        {
+          identifier: "5326896622388075",
+          name: "Barbell Curl",
+          durationOverride: "+0",
+        },
+        {
+          identifier: "4260281125530243",
+          name: "Dumbbell Curl",
+          durationOverride: "+0",
+        },
+        {
+          identifier: "3601870208425586",
+          name: "Bench Dip",
+          durationOverride: "+0",
+        },
         {
           identifier: "9668352336875743",
           name: "Barbell Lying Tricep Extension",
+          durationOverride: "+0",
         },
         {
           identifier: "20217556900415556",
           name: "Dumbbell Concentration Curl",
+          durationOverride: "+10",
         },
       ],
     },
@@ -60,8 +100,16 @@ export const defaultSettings: Settings = {
       name: "Abs",
       active: true,
       exercises: [
-        { identifier: "029173396249283057", name: "Lying Leg-Hip Raise" },
-        { identifier: "2613053955280098", name: "Weighted Crunch" },
+        {
+          identifier: "029173396249283057",
+          name: "Lying Leg-Hip Raise",
+          durationOverride: "+0",
+        },
+        {
+          identifier: "2613053955280098",
+          name: "Weighted Crunch",
+          durationOverride: "+0",
+        },
       ],
     },
   ],
@@ -75,5 +123,6 @@ export const defaultSettings: Settings = {
   minSetRepetitions: 2,
   maxSetRepetitions: 3,
   nextExerciseAnnouncementOffset: 40,
+  showExtraSettings: false,
   version: 1,
 };

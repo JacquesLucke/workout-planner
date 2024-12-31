@@ -11,6 +11,7 @@ export interface Settings {
   minSetRepetitions: number;
   maxSetRepetitions: number;
   nextExerciseAnnouncementOffset: number;
+  showExtraSettings: boolean;
 }
 
 export interface ExerciseGroup {
@@ -23,6 +24,7 @@ export interface ExerciseGroup {
 export interface Exercise {
   identifier: string;
   name: string;
+  durationOverride: string;
 }
 
 export interface Workout {

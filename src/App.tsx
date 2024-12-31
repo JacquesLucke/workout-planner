@@ -265,6 +265,7 @@ function GlobalTimeSettingsBox() {
       <GroupsPerWorkoutInput />
       <SetsPerGroupRangeInput />
       <SetRepetitionsRangeInput />
+      <ShowExtraSettingsInput />
     </div>
   );
 }
@@ -362,6 +363,45 @@ function SetRepetitionsRangeInput() {
         settings.maxSetRepetitions = newProp[1];
       }}
     />
+  );
+}
+
+function ShowExtraSettingsInput() {
+  return (
+    <SettingsBooleanInput
+      label="Show Extra Settings"
+      getter={(settings) => settings.showExtraSettings}
+      setter={(settings, newProp) => (settings.showExtraSettings = newProp)}
+    />
+  );
+}
+
+function SettingsBooleanInput({
+  label,
+  getter,
+  setter,
+}: {
+  label: string;
+  getter: (settings: Settings) => boolean;
+  setter: (settings: Settings, newProp: boolean) => void;
+}) {
+  const [settings, setSettings] = useSettings();
+
+  function updateProp(newProp: boolean) {
+    setter(settings, newProp);
+    setSettings(settings);
+  }
+
+  return (
+    <div className="flex m-2 items-center">
+      <label className="w-44">{label}:</label>
+      <input
+        type="checkbox"
+        checked={getter(settings)}
+        onChange={(e) => updateProp(e.target.checked)}
+        className="ml-2 mr-4 cursor-pointer"
+      />
+    </div>
   );
 }
 
@@ -482,7 +522,7 @@ function ExerciseGroupSection({
   return (
     <div className="bg-sky-900 my-2 p-2">
       <div className="flex justify-between items-center">
-        <div className="font-bold">
+        <div className="font-bold text-lg">
           <input
             type="checkbox"
             checked={group.active ?? true}
@@ -608,23 +648,65 @@ function ExerciseInfoRow({
   }
 
   return (
-    <div className="flex justify-between items-center">
-      <input
-        value={exercise.name}
-        onChange={(e) => renameExercise(e.target.value)}
-        onKeyDown={(e) =>
-          e.key === "Enter" && (e.target as HTMLInputElement).blur()
-        }
-        className="bg-transparent pl-2 py-1 text-sky-50 w-64"
-        ref={nameRef}
-        placeholder="Exercise Name"
-      />
-      <div
-        className="p-1 hover:underline cursor-pointer text-sky-300 mr-2 select-none"
-        onClick={removeExercise}
-      >
-        Remove
+    <div
+      className={`${
+        settings.showExtraSettings ? "bg-sky-950 rounded my-2" : ""
+      }`}
+    >
+      <div className={`flex justify-between items-center`}>
+        <input
+          value={exercise.name}
+          onChange={(e) => renameExercise(e.target.value)}
+          onKeyDown={(e) =>
+            e.key === "Enter" && (e.target as HTMLInputElement).blur()
+          }
+          className={`bg-transparent ml-2 py-1 text-sky-50 w-64 ${
+            settings.showExtraSettings ? "font-bold" : ""
+          }`}
+          ref={nameRef}
+          placeholder="Exercise Name"
+        />
+        <div
+          className="p-1 hover:underline cursor-pointer text-sky-300 mr-2 select-none"
+          onClick={removeExercise}
+        >
+          Remove
+        </div>
       </div>
+      {settings.showExtraSettings ? (
+        <ExerciseExtraSettings exercise={exercise} />
+      ) : null}
+    </div>
+  );
+}
+
+function ExerciseExtraSettings({ exercise }: { exercise: Exercise }) {
+  const [settings, setSettings] = useSettings();
+
+  function updateDurationOverride(newValue: string) {
+    const foundExercise = findExercise(
+      settings.exerciseGroups,
+      exercise.identifier
+    )!;
+    foundExercise.durationOverride = newValue;
+    setSettings(settings);
+  }
+
+  const hasValidOverride = getOverriddenExerciseDuration(
+    exercise,
+    settings
+  ).overrideIsValid;
+
+  return (
+    <div className="flex items-center ml-2">
+      <label className="w-44 text-sky-50">Duration Override:</label>
+      <input
+        value={exercise.durationOverride}
+        onChange={(e) => updateDurationOverride(e.target.value)}
+        className={`max-w-24 text-sky-50 flex-1 bg-transparent rounded px-2 py-1 focus:outline-none appearance-none ${
+          hasValidOverride ? "" : "bg-red-800"
+        }`}
+      />
     </div>
   );
 }
@@ -645,6 +727,7 @@ function AddExerciseButton({
     foundGroup.exercises.push({
       identifier: getNewIdentifier(),
       name: "",
+      durationOverride: "+0",
     });
     setSettings(settings);
     setTimeout(() => {
@@ -703,6 +786,14 @@ function versioningSettings() {
   }
   if (settings.nextExerciseAnnouncementOffset === undefined) {
     settings.nextExerciseAnnouncementOffset = 30;
+  }
+  for (const group of settings.exerciseGroups) {
+    for (const exercise of group.exercises) {
+      exercise.durationOverride = "+0";
+    }
+  }
+  if (settings.showExtraSettings === undefined) {
+    settings.showExtraSettings = false;
   }
   localStorage.setItem(settingsLocalStorageKey, JSON.stringify(settings));
 }
@@ -803,9 +894,13 @@ function createMainTasksForWorkout(settings: Settings) {
       const exercise = exercisesToUse[i];
       const setsNum = setDistribution[i];
       for (let j = 0; j < setsNum; j++) {
+        const duration = getOverriddenExerciseDuration(
+          exercise,
+          settings
+        ).duration;
         tasks.push({
           name: exercise.name,
-          duration: settings.defaultTaskDuration,
+          duration,
           currentSecond: 0,
           type: "exercise",
         });
@@ -1030,6 +1125,41 @@ function findExercise(groups: ExerciseGroup[], identifier: string) {
     }
   }
   return null;
+}
+
+interface ExerciseDurationResult {
+  duration: number;
+  overrideIsValid: boolean;
+}
+
+function getOverriddenExerciseDuration(
+  exercise: Exercise,
+  settings: Settings
+): ExerciseDurationResult {
+  if (/^[+-]\d+$/.test(exercise.durationOverride)) {
+    const offset = parseInt(exercise.durationOverride);
+    return {
+      duration: Math.max(1, settings.defaultTaskDuration + offset),
+      overrideIsValid: true,
+    };
+  }
+  if (/^\d+$/.test(exercise.durationOverride)) {
+    return {
+      duration: Math.max(1, parseInt(exercise.durationOverride)),
+      overrideIsValid: true,
+    };
+  }
+  if (/^x\d+$/.test(exercise.durationOverride)) {
+    const multiplier = parseInt(exercise.durationOverride.substring(1));
+    return {
+      duration: Math.max(1, settings.defaultTaskDuration * multiplier),
+      overrideIsValid: true,
+    };
+  }
+  return {
+    duration: Math.max(1, settings.defaultTaskDuration),
+    overrideIsValid: false,
+  };
 }
 
 async function ensureWakeLock() {
