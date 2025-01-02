@@ -251,10 +251,30 @@ export function saySomethingIfNecessary(
         task.duration - settings.nextExerciseAnnouncementOffset
       ) {
         if (nextTask) {
+          let nextTaskRepetitions = 0;
+          for (let i = currentTaskIndex + 1; i < workout.tasks.length; i++) {
+            if (nextTask.name === workout.tasks[i].name) {
+              nextTaskRepetitions++;
+            } else {
+              break;
+            }
+          }
           if (nextTask.name == task.name) {
-            say("Next up: [pause] Same exercise!");
+            if (nextTaskRepetitions === 1) {
+              say("Next up: [pause] Same exercise one more time!");
+            } else {
+              say(
+                `Next up: [pause] Same exercise ${nextTaskRepetitions} more times!`
+              );
+            }
           } else {
-            say(`Next up: [pause] ${nextTask.name}!`);
+            if (nextTaskRepetitions === 1) {
+              say(`Next up: [pause] ${nextTask.name}!`);
+            } else {
+              say(
+                `Next up: [pause] ${nextTaskRepetitions} sets of ${nextTask.name}!`
+              );
+            }
           }
         }
       } else if (
