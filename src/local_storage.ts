@@ -4,6 +4,8 @@ import useLocalStorageState, {
 import { defaultSettings } from "./default_settings";
 import { defaultWorkout } from "./default_workout";
 import {
+  ActivityLog,
+  activityLogLocalStorageKey,
   Settings,
   settingsLocalStorageKey,
   Workout,
@@ -26,5 +28,13 @@ export function useCurrentTab() {
 export function useCurrentWorkout(): LocalStorageState<Workout> {
   return useLocalStorageState<Workout>(workoutLocalStorageKey, {
     defaultValue: defaultWorkout,
+  });
+}
+
+export function useActivityLog(): LocalStorageState<ActivityLog> {
+  return useLocalStorageState<ActivityLog>(activityLogLocalStorageKey, {
+    defaultValue: {
+      exercises: [],
+    },
   });
 }

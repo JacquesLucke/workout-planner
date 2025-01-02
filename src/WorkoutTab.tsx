@@ -1,5 +1,9 @@
 import { createContext, useContext, useEffect } from "react";
-import { useCurrentWorkout, useSettings } from "./local_storage";
+import {
+  useActivityLog,
+  useCurrentWorkout,
+  useSettings,
+} from "./local_storage";
 import { WorkoutTask } from "./model";
 import { ensureWakeLock, ensureNoWakeLock } from "./wake_lock";
 import {
@@ -11,6 +15,7 @@ import {
   generateWorkout,
   addSecondInWorkout,
 } from "./workout";
+import { updateActivityLogAfterFinishedWorkout } from "./activity_log";
 
 export function WorkoutTab() {
   return (
@@ -128,6 +133,7 @@ function NewWorkoutButton() {
 
 function WorkoutList() {
   const [settings] = useSettings();
+  const [activityLog, setActivityLog] = useActivityLog();
   const [currentWorkout, setCurrentWorkout] = useCurrentWorkout();
   const { isPlaying, setIsPlaying } = useContext(IsPlayingContext);
 
@@ -140,6 +146,8 @@ function WorkoutList() {
       setCurrentWorkout(currentWorkout);
       if (workoutHasEnded(currentWorkout)) {
         setIsPlaying(false);
+        updateActivityLogAfterFinishedWorkout(activityLog, currentWorkout);
+        setActivityLog(activityLog);
       }
     }, 1000);
     return () => clearInterval(interval);

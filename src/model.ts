@@ -44,5 +44,15 @@ export type WorkoutTaskTypeString =
   | "exercise"
   | "cooldown";
 
+export interface ActivityLog {
+  exercises: ExerciseLog[];
+}
+
+export interface ExerciseLog {
+  name: string;
+  lastFinished: number;
+}
+
 export const settingsLocalStorageKey = "settings";
 export const workoutLocalStorageKey = "currentWorkout";
+export const activityLogLocalStorageKey = "activityLog";

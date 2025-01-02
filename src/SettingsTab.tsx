@@ -1,8 +1,9 @@
 import { useRef } from "react";
 import { defaultSettings } from "./default_settings";
-import { useSettings } from "./local_storage";
+import { useSettings, useActivityLog } from "./local_storage";
 import { Settings, ExerciseGroup, Exercise } from "./model";
 import { getOverriddenExerciseDuration } from "./workout";
+import { getLastTimeExerciseOfGroupWasFinished } from "./activity_log";
 
 export function SettingsTab() {
   const [settings, _] = useSettings();
@@ -268,6 +269,7 @@ function ExerciseGroupSection({
   groupNameRef: React.RefObject<HTMLInputElement | null> | undefined;
 }) {
   const [settings, setSettings] = useSettings();
+  const [activityLog] = useActivityLog();
   const newExerciseNameRef = useRef<HTMLInputElement>(null);
 
   function renameGroup(newName: string) {
@@ -293,8 +295,14 @@ function ExerciseGroupSection({
     setSettings(settings);
   }
 
+  const lastTime = getLastTimeExerciseOfGroupWasFinished(activityLog, group);
+  let lastTimeMessage = "Never";
+  if (lastTime) {
+    lastTimeMessage = getStringForLastTime(lastTime, new Date());
+  }
+
   return (
-    <div className="bg-sky-900 my-2 p-2">
+    <div className="bg-sky-900 my-2 p-1">
       <div className="flex justify-between items-center">
         <div className="font-bold text-lg">
           <input
@@ -309,7 +317,7 @@ function ExerciseGroupSection({
             onKeyDown={(e) =>
               e.key === "Enter" && (e.target as HTMLInputElement).blur()
             }
-            className="bg-transparent p-2 text-sky-50 w-44"
+            className="bg-transparent p-1 text-sky-50 w-44"
             ref={groupNameRef}
             placeholder="Exercise Group Name"
           />
@@ -321,6 +329,7 @@ function ExerciseGroupSection({
           Remove Group
         </div>
       </div>
+      <div className="text-gray-400 text-sm ml-2">{`Last Time: ${lastTimeMessage}`}</div>
       {group.exercises.map((exercise, i) => (
         <ExerciseInfoRow
           key={exercise.identifier}
@@ -534,4 +543,18 @@ function findExercise(groups: ExerciseGroup[], identifier: string) {
     }
   }
   return null;
+}
+
+function getStringForLastTime(prev: Date, now: Date) {
+  const prevDay = new Date(prev.getFullYear(), prev.getMonth(), prev.getDate());
+  const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msPerDay = 86400000;
+  const days = Math.floor((nowDay.getTime() - prevDay.getTime()) / msPerDay);
+  if (days === 0) {
+    return "Today";
+  }
+  if (days === 1) {
+    return "Yesterday";
+  }
+  return `${days} days ago`;
 }
