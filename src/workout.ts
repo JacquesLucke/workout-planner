@@ -294,10 +294,12 @@ export function saySomethingIfNecessary(
         say(halfwayThroughMessage);
       } else if (fiveSecondsToGo) {
         say(fiveSecondsToGoMessage);
-      } else if (taskJustEnded) {
-        say(`DONE!`);
       }
       break;
     }
+  }
+
+  if (nextTask === null && taskJustEnded) {
+    say(`DONE!`);
   }
 }
