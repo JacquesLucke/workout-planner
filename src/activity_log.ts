@@ -37,3 +37,15 @@ export function getLastTimeExerciseOfGroupWasFinished(
   const lastFinished = Math.max(...exerciseLogs.map((e) => e.lastFinished));
   return new Date(lastFinished);
 }
+
+export function getLastFinishedWorkoutTime(
+  activityLog: ActivityLog
+): null | Date {
+  if (activityLog.exercises.length === 0) {
+    return null;
+  }
+  const lastFinished = Math.max(
+    ...activityLog.exercises.map((e) => e.lastFinished)
+  );
+  return new Date(lastFinished);
+}

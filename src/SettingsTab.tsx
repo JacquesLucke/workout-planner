@@ -4,6 +4,7 @@ import { useSettings, useActivityLog } from "./local_storage";
 import { Settings, ExerciseGroup, Exercise } from "./model";
 import { getOverriddenExerciseDuration } from "./workout";
 import { getLastTimeExerciseOfGroupWasFinished } from "./activity_log";
+import { getStringForLastTime } from "./utils";
 
 export function SettingsTab() {
   const [settings, _] = useSettings();
@@ -296,10 +297,7 @@ function ExerciseGroupSection({
   }
 
   const lastTime = getLastTimeExerciseOfGroupWasFinished(activityLog, group);
-  let lastTimeMessage = "Never";
-  if (lastTime) {
-    lastTimeMessage = getStringForLastTime(lastTime, new Date());
-  }
+  const lastTimeMessage = getStringForLastTime(lastTime, new Date());
 
   return (
     <div className="bg-sky-900 my-2 p-1">
@@ -543,18 +541,4 @@ function findExercise(groups: ExerciseGroup[], identifier: string) {
     }
   }
   return null;
-}
-
-function getStringForLastTime(prev: Date, now: Date) {
-  const prevDay = new Date(prev.getFullYear(), prev.getMonth(), prev.getDate());
-  const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const msPerDay = 86400000;
-  const days = Math.floor((nowDay.getTime() - prevDay.getTime()) / msPerDay);
-  if (days === 0) {
-    return "Today";
-  }
-  if (days === 1) {
-    return "Yesterday";
-  }
-  return `${days} days ago`;
 }

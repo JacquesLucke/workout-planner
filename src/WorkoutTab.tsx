@@ -15,12 +15,17 @@ import {
   generateWorkout,
   addSecondInWorkout,
 } from "./workout";
-import { updateActivityLogAfterFinishedWorkout } from "./activity_log";
+import {
+  getLastFinishedWorkoutTime,
+  updateActivityLogAfterFinishedWorkout,
+} from "./activity_log";
+import { getStringForLastTime } from "./utils";
 
 export function WorkoutTab() {
   return (
     <>
       <WorkoutControlButtons />
+      <LastFinishedWorkoutLabel />
       <WorkoutList />
     </>
   );
@@ -85,6 +90,19 @@ function StartPauseButton() {
           ? `Done (${secondsToTimeString(totalTime)})`
           : `Continue (${secondsToTimeString(remainingTime)})`
         : `Start (${secondsToTimeString(totalTime)})`}
+    </div>
+  );
+}
+
+function LastFinishedWorkoutLabel() {
+  const [activityLog] = useActivityLog();
+
+  const lastWorkoutTime = getLastFinishedWorkoutTime(activityLog);
+  const lastWorkoutText = getStringForLastTime(lastWorkoutTime, new Date());
+
+  return (
+    <div className="text-gray-200 text-sm m-2 text-center">
+      {`Last Finished: ${lastWorkoutText}`}
     </div>
   );
 }

@@ -32,3 +32,19 @@ export function randomChoiceUniqueN<T>(array: T[], n: number) {
 export function randomIntegerInRangeInclusive(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+export function getStringForLastTime(prev: Date | null, now: Date) {
+  if (prev === null) {
+    return "Never";
+  }
+  const prevDay = new Date(prev.getFullYear(), prev.getMonth(), prev.getDate());
+  const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msPerDay = 86400000;
+  const days = Math.floor((nowDay.getTime() - prevDay.getTime()) / msPerDay);
+  if (days === 0) {
+    return "Today";
+  }
+  if (days === 1) {
+    return "Yesterday";
+  }
+  return `${days} days ago`;
+}
