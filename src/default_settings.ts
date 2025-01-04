@@ -124,5 +124,6 @@ export const defaultSettings: Settings = {
   maxSetRepetitions: 3,
   nextExerciseAnnouncementOffset: 40,
   showExtraSettings: false,
+  restDaysPerGroups: 2,
   version: 1,
 };

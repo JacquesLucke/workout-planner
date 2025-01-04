@@ -34,6 +34,9 @@ function versioningSettings() {
   if (settings.showExtraSettings === undefined) {
     settings.showExtraSettings = false;
   }
+  if (settings.restDaysPerGroups === undefined) {
+    settings.restDaysPerGroups = 2;
+  }
   localStorage.setItem(settingsLocalStorageKey, JSON.stringify(settings));
 }
 

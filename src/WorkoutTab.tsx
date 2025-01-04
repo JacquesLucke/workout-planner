@@ -131,11 +131,12 @@ function ResetWorkoutButton() {
 
 function NewWorkoutButton() {
   const [settings] = useSettings();
+  const [activityLog] = useActivityLog();
   const [_, setCurrentWorkout] = useCurrentWorkout();
   const { setIsPlaying } = useContext(IsPlayingContext);
 
   function updateWorkout() {
-    setCurrentWorkout(generateWorkout(settings));
+    setCurrentWorkout(generateWorkout(settings, activityLog));
     setIsPlaying(false);
   }
 

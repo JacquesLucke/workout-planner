@@ -12,6 +12,7 @@ export interface Settings {
   maxSetRepetitions: number;
   nextExerciseAnnouncementOffset: number;
   showExtraSettings: boolean;
+  restDaysPerGroups: number;
 }
 
 export interface ExerciseGroup {

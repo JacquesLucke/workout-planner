@@ -4,7 +4,7 @@ import { useSettings, useActivityLog } from "./local_storage";
 import { Settings, ExerciseGroup, Exercise } from "./model";
 import { getOverriddenExerciseDuration } from "./workout";
 import { getLastTimeExerciseOfGroupWasFinished } from "./activity_log";
-import { getStringForLastTime } from "./utils";
+import { getDaysDifference, getStringForLastTime } from "./utils";
 
 export function SettingsTab() {
   const [settings, _] = useSettings();
@@ -38,6 +38,7 @@ function GlobalTimeSettingsBox() {
       <DefaultTaskDurationInput />
       <CooldownDurationInput />
       <NextExerciseAnnouncementOffsetInput />
+      <RestDaysPerGroupInput />
       <GroupsPerWorkoutInput />
       <SetsPerGroupRangeInput />
       <SetRepetitionsRangeInput />
@@ -106,6 +107,16 @@ function NextExerciseAnnouncementOffsetInput() {
       setter={(settings, newProp) =>
         (settings.nextExerciseAnnouncementOffset = newProp)
       }
+    />
+  );
+}
+
+function RestDaysPerGroupInput() {
+  return (
+    <SettingsNumberInput
+      label="Rest Days per Group"
+      getter={(settings) => settings.restDaysPerGroups}
+      setter={(settings, newProp) => (settings.restDaysPerGroups = newProp)}
     />
   );
 }
@@ -297,7 +308,14 @@ function ExerciseGroupSection({
   }
 
   const lastTime = getLastTimeExerciseOfGroupWasFinished(activityLog, group);
-  const lastTimeMessage = getStringForLastTime(lastTime, new Date());
+  let lastTimeMessage = getStringForLastTime(lastTime, new Date());
+  const should_rest = lastTime
+    ? getDaysDifference(lastTime, new Date()) < settings.restDaysPerGroups
+    : false;
+
+  if (should_rest) {
+    lastTimeMessage += " (currently resting)";
+  }
 
   return (
     <div className="bg-sky-900 my-2 p-1">
@@ -308,6 +326,7 @@ function ExerciseGroupSection({
             checked={group.active ?? true}
             onChange={toggleActive}
             className="ml-2 mr-4 cursor-pointer"
+            disabled={should_rest}
           />
           <input
             value={group.name}

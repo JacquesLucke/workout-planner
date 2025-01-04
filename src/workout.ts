@@ -1,18 +1,27 @@
-import { Exercise, Settings, Workout, WorkoutTask } from "./model";
+import { getLastTimeExerciseOfGroupWasFinished } from "./activity_log";
+import {
+  ActivityLog,
+  Exercise,
+  ExerciseGroup,
+  Settings,
+  Workout,
+  WorkoutTask,
+} from "./model";
 import { say } from "./speech";
 import {
   randomChoiceUniqueN,
   randomIntegerInRangeInclusive,
   shuffleArray,
   repeatToLength,
+  getDaysDifference,
 } from "./utils";
 
-export function generateWorkout(settings: Settings) {
+export function generateWorkout(settings: Settings, activityLog: ActivityLog) {
   const workout: Workout = {
     tasks: [],
   };
 
-  const mainTasks = createMainTasksForWorkout(settings);
+  const mainTasks = createMainTasksForWorkout(settings, activityLog);
 
   if (settings.warmupDuration > 0) {
     workout.tasks.push({
@@ -48,9 +57,14 @@ export function generateWorkout(settings: Settings) {
   return workout;
 }
 
-function createMainTasksForWorkout(settings: Settings) {
+function createMainTasksForWorkout(
+  settings: Settings,
+  activityLog: ActivityLog
+) {
   const tasks: WorkoutTask[] = [];
-  const activeGroups = settings.exerciseGroups.filter((g) => g.active);
+  const activeGroups = settings.exerciseGroups.filter((g) =>
+    shouldIncludeGroupInWorkout(settings, g, activityLog)
+  );
   const groups = randomChoiceUniqueN(activeGroups, settings.groupsPerWorkout);
   for (const group of groups) {
     const setsInGroup = randomIntegerInRangeInclusive(
@@ -92,6 +106,24 @@ function createMainTasksForWorkout(settings: Settings) {
   }
 
   return tasks;
+}
+
+function shouldIncludeGroupInWorkout(
+  settings: Settings,
+  group: ExerciseGroup,
+  activityLog: ActivityLog
+) {
+  if (!group.active) {
+    return false;
+  }
+  const lastTime = getLastTimeExerciseOfGroupWasFinished(activityLog, group);
+  if (lastTime !== null) {
+    const days = getDaysDifference(lastTime, new Date());
+    if (days < settings.restDaysPerGroups) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function getWorkoutGroupSetDistribution(setsNum: number, settings: Settings) {
