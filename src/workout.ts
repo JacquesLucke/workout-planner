@@ -224,6 +224,15 @@ export function saySomethingIfNecessary(
   const fiveSecondsToGoMessage = "5 seconds to go!";
   const halfwayThroughMessage = "Halfway through!";
 
+  let nextTaskRepetitions = 0;
+  for (let i = currentTaskIndex + 1; i < workout.tasks.length; i++) {
+    if (nextTask?.name === workout.tasks[i].name) {
+      nextTaskRepetitions++;
+    } else {
+      break;
+    }
+  }
+
   switch (task.type) {
     case "warmup": {
       if (taskJustStarted) {
@@ -237,7 +246,11 @@ export function saySomethingIfNecessary(
     }
     case "initial-preparation": {
       if (taskJustStarted && nextTask) {
-        say(`Prepare ${nextTask.name}!`);
+        if (nextTaskRepetitions === 1) {
+          say(`Prepare ${nextTask.name}!`);
+        } else {
+          say(`Prepare ${nextTaskRepetitions} sets of ${nextTask.name}!`);
+        }
       } else if (fiveSecondsToGo) {
         say(fiveSecondsToGoMessage);
       }
@@ -251,14 +264,6 @@ export function saySomethingIfNecessary(
         task.duration - settings.nextExerciseAnnouncementOffset
       ) {
         if (nextTask) {
-          let nextTaskRepetitions = 0;
-          for (let i = currentTaskIndex + 1; i < workout.tasks.length; i++) {
-            if (nextTask.name === workout.tasks[i].name) {
-              nextTaskRepetitions++;
-            } else {
-              break;
-            }
-          }
           if (nextTask.name == task.name) {
             if (nextTaskRepetitions === 1) {
               say("Next up: [pause] Same exercise one more time!");
