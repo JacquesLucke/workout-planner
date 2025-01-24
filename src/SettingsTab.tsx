@@ -7,7 +7,7 @@ import {
   shouldIncludeGroupInWorkout,
 } from "./workout";
 import { getLastTimeExerciseOfGroupWasFinished } from "./activity_log";
-import { getDaysDifference, getStringForLastTime } from "./utils";
+import { getStringForLastTime } from "./utils";
 
 export function SettingsTab() {
   const [settings, _] = useSettings();
