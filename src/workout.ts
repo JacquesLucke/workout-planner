@@ -250,9 +250,11 @@ export function saySomethingIfNecessary(
       ? workout.tasks[currentTaskIndex + 1]
       : null;
 
+  const secondsToGo = task.duration - task.currentSecond;
+
   const taskJustStarted = task.currentSecond === 0;
-  const taskJustEnded = task.currentSecond === task.duration;
-  const fiveSecondsToGo = task.currentSecond === task.duration - 5;
+  const taskJustEnded = secondsToGo === 0;
+  const fiveSecondsToGo = secondsToGo === 5;
   const halfwayThrough = task.currentSecond === Math.floor(task.duration / 2);
 
   const fiveSecondsToGoMessage = "5 seconds to go!";
@@ -331,6 +333,8 @@ export function saySomethingIfNecessary(
         say(`Go!`);
       } else if (halfwayThrough) {
         say(halfwayThroughMessage);
+      } else if (task.duration >= 90 && secondsToGo === 30) {
+        say(`30 seconds to go!`);
       } else if (fiveSecondsToGo) {
         say(fiveSecondsToGoMessage);
       }
