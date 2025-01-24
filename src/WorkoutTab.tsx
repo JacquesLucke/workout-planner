@@ -4,22 +4,23 @@ import {
   useCurrentWorkout,
   useSettings,
 } from "./local_storage";
-import { WorkoutTask } from "./model";
+import { Settings, Workout, WorkoutTask } from "./model";
 import { ensureWakeLock, ensureNoWakeLock } from "./wake_lock";
 import {
   workoutHasBegan,
   workoutHasEnded,
   getTotalWorkoutTime,
   getRemainingWorkoutTime,
-  saySomethingIfNecessary,
   generateWorkout,
   addSecondInWorkout,
+  getMessageToSay,
 } from "./workout";
 import {
   getLastFinishedWorkoutTime,
   updateActivityLogAfterFinishedWorkout,
 } from "./activity_log";
 import { getStringForLastTime } from "./utils";
+import { sayPrefetch, say } from "./speech";
 
 export function WorkoutTab() {
   return (
@@ -70,7 +71,10 @@ function StartPauseButton() {
     const newPlayingState = !isPlaying;
     setIsPlaying(newPlayingState);
     if (newPlayingState && !hasBegan) {
-      saySomethingIfNecessary(workout, 0, settings);
+      const message = getMessageToSay(workout, 0, settings);
+      if (message) {
+        say(message);
+      }
     }
   }
 
@@ -161,7 +165,9 @@ function WorkoutList() {
       return;
     }
     let interval = setInterval(() => {
-      addSecondInWorkout(currentWorkout, settings);
+      addSecondInWorkout(currentWorkout, settings, say);
+      prefetchAudioForFutureSecond(currentWorkout, settings);
+
       setCurrentWorkout(currentWorkout);
       if (workoutHasEnded(currentWorkout)) {
         setIsPlaying(false);
@@ -185,6 +191,14 @@ function WorkoutList() {
       ))}
     </div>
   );
+}
+
+function prefetchAudioForFutureSecond(workout: Workout, settings: Settings) {
+  const workoutCopy = structuredClone(workout);
+  for (let i = 0; i < 2; i++) {
+    addSecondInWorkout(workoutCopy, settings, () => {});
+  }
+  addSecondInWorkout(workoutCopy, settings, sayPrefetch);
 }
 
 function WorkoutTaskRow({ task }: { task: WorkoutTask }) {

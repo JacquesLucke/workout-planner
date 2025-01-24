@@ -10,7 +10,6 @@ import {
   Workout,
   WorkoutTask,
 } from "./model";
-import { say } from "./speech";
 import {
   randomChoiceUniqueN,
   randomIntegerInRangeInclusive,
@@ -232,16 +231,30 @@ export function getOverriddenExerciseDuration(
   };
 }
 
-export function addSecondInWorkout(workout: Workout, settings: Settings) {
+export function addSecondInWorkout(
+  workout: Workout,
+  settings: Settings,
+  sayMessage: (message: string) => void
+) {
   for (let task_i = 0; task_i < workout.tasks.length; task_i++) {
     const task = workout.tasks[task_i];
     if (task.currentSecond < task.duration) {
       task.currentSecond += 1;
 
-      saySomethingIfNecessary(workout, task_i, settings);
+      const currentTaskMessage = getMessageToSay(workout, task_i, settings);
+      if (currentTaskMessage) {
+        sayMessage(currentTaskMessage);
+      }
       if (task.currentSecond === task.duration) {
         if (task_i < workout.tasks.length - 1) {
-          saySomethingIfNecessary(workout, task_i + 1, settings);
+          const nextTaskMessage = getMessageToSay(
+            workout,
+            task_i + 1,
+            settings
+          );
+          if (nextTaskMessage) {
+            sayMessage(nextTaskMessage);
+          }
         }
       }
       return;
@@ -250,18 +263,7 @@ export function addSecondInWorkout(workout: Workout, settings: Settings) {
   return;
 }
 
-export function saySomethingIfNecessary(
-  workout: Workout,
-  currentTaskIndex: number,
-  settings: Settings
-) {
-  const message = getMessageToSay(workout, currentTaskIndex, settings);
-  if (message) {
-    say(message);
-  }
-}
-
-function getMessageToSay(
+export function getMessageToSay(
   workout: Workout,
   currentTaskIndex: number,
   settings: Settings
