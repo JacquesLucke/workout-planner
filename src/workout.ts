@@ -255,6 +255,17 @@ export function saySomethingIfNecessary(
   currentTaskIndex: number,
   settings: Settings
 ) {
+  const message = getMessageToSay(workout, currentTaskIndex, settings);
+  if (message) {
+    say(message);
+  }
+}
+
+function getMessageToSay(
+  workout: Workout,
+  currentTaskIndex: number,
+  settings: Settings
+): string | null {
   const task = workout.tasks[currentTaskIndex];
   const nextTask =
     currentTaskIndex < workout.tasks.length - 1
@@ -283,29 +294,29 @@ export function saySomethingIfNecessary(
   switch (task.type) {
     case "warmup": {
       if (taskJustStarted) {
-        say(`Starting with warmup!`);
+        return `Starting with warmup!`;
       } else if (halfwayThrough) {
-        say(halfwayThroughMessage);
+        return halfwayThroughMessage;
       } else if (fiveSecondsToGo) {
-        say(fiveSecondsToGoMessage);
+        return fiveSecondsToGoMessage;
       }
       break;
     }
     case "initial-preparation": {
       if (taskJustStarted && nextTask) {
         if (nextTaskRepetitions === 1) {
-          say(`Prepare ${nextTask.name}!`);
+          return `Prepare ${nextTask.name}!`;
         } else {
-          say(`Prepare ${nextTaskRepetitions} sets of ${nextTask.name}!`);
+          return `Prepare ${nextTaskRepetitions} sets of ${nextTask.name}!`;
         }
       } else if (fiveSecondsToGo) {
-        say(fiveSecondsToGoMessage);
+        return fiveSecondsToGoMessage;
       }
       break;
     }
     case "exercise": {
       if (taskJustStarted) {
-        say(`GO!`);
+        return `GO!`;
       } else if (
         task.currentSecond ===
         task.duration - settings.nextExerciseAnnouncementOffset
@@ -313,19 +324,15 @@ export function saySomethingIfNecessary(
         if (nextTask) {
           if (nextTask.name == task.name) {
             if (nextTaskRepetitions === 1) {
-              say("Next up: [pause] Same exercise one more time!");
+              return "Next up: [pause] Same exercise one more time!";
             } else {
-              say(
-                `Next up: [pause] Same exercise ${nextTaskRepetitions} more times!`
-              );
+              return `Next up: [pause] Same exercise ${nextTaskRepetitions} more times!`;
             }
           } else {
             if (nextTaskRepetitions === 1) {
-              say(`Next up: [pause] ${nextTask.name}!`);
+              return `Next up: [pause] ${nextTask.name}!`;
             } else {
-              say(
-                `Next up: [pause] ${nextTaskRepetitions} sets of ${nextTask.name}!`
-              );
+              return `Next up: [pause] ${nextTaskRepetitions} sets of ${nextTask.name}!`;
             }
           }
         }
@@ -333,27 +340,28 @@ export function saySomethingIfNecessary(
         settings.nextExerciseAnnouncementOffset >= 25 &&
         task.currentSecond == task.duration - 15
       ) {
-        say("15 seconds to go!");
+        return "15 seconds to go!";
       } else if (fiveSecondsToGo) {
-        say(fiveSecondsToGoMessage);
+        return fiveSecondsToGoMessage;
       }
       break;
     }
     case "cooldown": {
       if (taskJustStarted) {
-        say(`Go!`);
+        return `Go!`;
       } else if (halfwayThrough) {
-        say(halfwayThroughMessage);
+        return halfwayThroughMessage;
       } else if (task.duration >= 90 && secondsToGo === 30) {
-        say(`30 seconds to go!`);
+        return `30 seconds to go!`;
       } else if (fiveSecondsToGo) {
-        say(fiveSecondsToGoMessage);
+        return fiveSecondsToGoMessage;
       }
       break;
     }
   }
 
   if (nextTask === null && taskJustEnded) {
-    say(`DONE!`);
+    return `DONE!`;
   }
+  return null;
 }
