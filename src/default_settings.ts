@@ -128,7 +128,7 @@ export const defaultSettings: Settings = {
   minSetsPerGroup: 4,
   maxSetsPerGroup: 7,
   groupsPerWorkout: 2,
-  firstExercisePreparationDuration: 20,
+  firstExercisePreparationDuration: 30,
   minSetRepetitions: 2,
   maxSetRepetitions: 3,
   nextExerciseAnnouncementOffset: 40,
