@@ -1,4 +1,7 @@
-import { getLastTimeExerciseOfGroupWasFinished } from "./activity_log";
+import {
+  getLastFinishedWorkoutTime,
+  getLastTimeExerciseOfGroupWasFinished,
+} from "./activity_log";
 import {
   ActivityLog,
   Exercise,
@@ -110,7 +113,7 @@ function createMainTasksForWorkout(
   return tasks;
 }
 
-function shouldIncludeGroupInWorkout(
+export function shouldIncludeGroupInWorkout(
   settings: Settings,
   group: ExerciseGroup,
   activityLog: ActivityLog
@@ -118,10 +121,18 @@ function shouldIncludeGroupInWorkout(
   if (!group.active) {
     return false;
   }
-  const lastTime = getLastTimeExerciseOfGroupWasFinished(activityLog, group);
-  if (lastTime !== null) {
-    const days = getDaysDifference(lastTime, new Date());
-    if (days < settings.restDaysPerGroups) {
+  const lastGroupTime = getLastTimeExerciseOfGroupWasFinished(
+    activityLog,
+    group
+  );
+  if (lastGroupTime !== null) {
+    const lastWorkoutTime = getLastFinishedWorkoutTime(activityLog)!;
+    const didWorkoutToday =
+      getDaysDifference(lastWorkoutTime, new Date()) === 0;
+    let daysSinceGroup = getDaysDifference(lastGroupTime, new Date());
+    // Assume the workout is created for the next day if there was one today already.
+    daysSinceGroup += didWorkoutToday ? 1 : 0;
+    if (daysSinceGroup < settings.restDaysPerGroups) {
       return false;
     }
   }

@@ -2,7 +2,10 @@ import { useRef } from "react";
 import { defaultSettings } from "./default_settings";
 import { useSettings, useActivityLog } from "./local_storage";
 import { Settings, ExerciseGroup, Exercise } from "./model";
-import { getOverriddenExerciseDuration } from "./workout";
+import {
+  getOverriddenExerciseDuration,
+  shouldIncludeGroupInWorkout,
+} from "./workout";
 import { getLastTimeExerciseOfGroupWasFinished } from "./activity_log";
 import { getDaysDifference, getStringForLastTime } from "./utils";
 
@@ -309,11 +312,9 @@ function ExerciseGroupSection({
 
   const lastTime = getLastTimeExerciseOfGroupWasFinished(activityLog, group);
   let lastTimeMessage = getStringForLastTime(lastTime, new Date());
-  const should_rest = lastTime
-    ? getDaysDifference(lastTime, new Date()) < settings.restDaysPerGroups
-    : false;
+  const shouldRest = !shouldIncludeGroupInWorkout(settings, group, activityLog);
 
-  if (should_rest) {
+  if (shouldRest) {
     lastTimeMessage += " (currently resting)";
   }
 
@@ -326,7 +327,7 @@ function ExerciseGroupSection({
             checked={group.active ?? true}
             onChange={toggleActive}
             className="ml-2 mr-4 cursor-pointer"
-            disabled={should_rest}
+            disabled={shouldRest}
           />
           <input
             value={group.name}
