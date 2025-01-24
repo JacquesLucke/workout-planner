@@ -26,6 +26,7 @@ export interface Exercise {
   identifier: string;
   name: string;
   durationOverride: string;
+  isPrimary: boolean;
 }
 
 export interface Workout {

@@ -497,16 +497,36 @@ function ExerciseExtraSettings({ exercise }: { exercise: Exercise }) {
     settings
   ).overrideIsValid;
 
+  function updateIsPrimary(newValue: boolean) {
+    const foundExercise = findExercise(
+      settings.exerciseGroups,
+      exercise.identifier
+    )!;
+    foundExercise.isPrimary = newValue;
+    setSettings(settings);
+  }
+
   return (
-    <div className="flex items-center ml-2">
-      <label className="w-44 text-sky-50">Duration Override:</label>
-      <input
-        value={exercise.durationOverride}
-        onChange={(e) => updateDurationOverride(e.target.value)}
-        className={`max-w-24 text-sky-50 flex-1 bg-transparent rounded px-2 py-1 focus:outline-none appearance-none ${
-          hasValidOverride ? "" : "bg-red-800"
-        }`}
-      />
+    <div>
+      <div className="flex items-center ml-2">
+        <label className="w-44 text-sky-50">Is Primary:</label>
+        <input
+          type="checkbox"
+          checked={exercise.isPrimary}
+          onChange={(e) => updateIsPrimary(e.target.checked)}
+          className={``}
+        />
+      </div>
+      <div className="flex items-center ml-2">
+        <label className="w-44 text-sky-50">Duration Override:</label>
+        <input
+          value={exercise.durationOverride}
+          onChange={(e) => updateDurationOverride(e.target.value)}
+          className={`max-w-24 text-sky-50 flex-1 bg-transparent rounded px-2 py-1 focus:outline-none appearance-none ${
+            hasValidOverride ? "" : "bg-red-800"
+          }`}
+        />
+      </div>
     </div>
   );
 }
@@ -528,6 +548,7 @@ function AddExerciseButton({
       identifier: getNewIdentifier(),
       name: "",
       durationOverride: "+0",
+      isPrimary: false,
     });
     setSettings(settings);
     setTimeout(() => {

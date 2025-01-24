@@ -37,6 +37,13 @@ function versioningSettings() {
   if (settings.restDaysPerGroups === undefined) {
     settings.restDaysPerGroups = 2;
   }
+  for (const group of settings.exerciseGroups) {
+    for (const exercise of group.exercises) {
+      if (exercise.isPrimary === undefined) {
+        exercise.isPrimary = false;
+      }
+    }
+  }
   localStorage.setItem(settingsLocalStorageKey, JSON.stringify(settings));
 }
 

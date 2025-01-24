@@ -81,9 +81,11 @@ function createMainTasksForWorkout(
         group.exercises,
         setDistribution.length
       );
+      exercisesToUse.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
     } else {
       exercisesToUse = [...group.exercises];
       shuffleArray(exercisesToUse);
+      exercisesToUse.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
       exercisesToUse = repeatToLength(exercisesToUse, setDistribution.length);
     }
 
